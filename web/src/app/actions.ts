@@ -160,8 +160,7 @@ export async function enviarEnlace(form: FormData) {
   const permitido = (process.env.ALLOWED_EMAIL ?? "").toLowerCase();
   if (!email) redirect("/login?error=" + encodeURIComponent("Escribe tu correo."));
   if (permitido && email !== permitido) {
-    // Misma respuesta que un envío correcto, para no revelar qué correo está permitido.
-    redirect("/login?enviado=1");
+    redirect("/login?error=" + encodeURIComponent("Ese correo no tiene acceso a esta app."));
   }
   const h = await headers();
   const origen = h.get("origin") ?? `https://${h.get("host")}`;
@@ -170,8 +169,17 @@ export async function enviarEnlace(form: FormData) {
     email,
     options: { emailRedirectTo: `${origen}/auth/callback` },
   });
-  if (error) redirect("/login?error=" + encodeURIComponent(error.message));
+  if (error) redirect("/login?error=" + encodeURIComponent(traducirErrorAuth(error.message)));
   redirect("/login?enviado=1");
+}
+
+function traducirErrorAuth(msg: string): string {
+  if (/rate limit/i.test(msg)) {
+    return "Se alcanzó el límite de correos de Supabase (unos pocos por hora). Espera un rato y vuelve a intentar.";
+  }
+  const seg = msg.match(/after (\d+) seconds/i);
+  if (seg) return `Espera ${seg[1]} segundos antes de pedir otro enlace.`;
+  return `No se pudo enviar el enlace: ${msg}`;
 }
 
 export async function cerrarSesion() {

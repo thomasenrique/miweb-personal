@@ -41,6 +41,34 @@ export type Bill = {
   notas: string | null;
 };
 
+export type EstadoMeta = "activa" | "lograda" | "pausada";
+
+export type Goal = {
+  id: string;
+  nombre: string;
+  icono: string;
+  precio_total: number;
+  /** Cuánto ahorrar antes de comprar (pie). Sin crédito = precio_total. */
+  meta_ahorro: number;
+  aporte_mensual_plan: number | null;
+  fecha_inicio: string;
+  fecha_objetivo: string | null;
+  usa_credito: boolean;
+  tasa_anual: number | null;
+  n_cuotas: number | null;
+  estado: EstadoMeta;
+};
+
+export type Contribution = {
+  id: string;
+  goal_id: string;
+  monto: number;
+  fecha: string;
+  nota: string | null;
+};
+
+export type GoalFull = Goal & { contributions: Contribution[] };
+
 /** Proveedor con su categoría ya resuelta. */
 export type ProviderFull = Provider & { category: Category };
 /** Cuenta con proveedor y categoría resueltos. */

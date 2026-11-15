@@ -6,7 +6,7 @@ Cada fase termina con algo usable en el celular.
 Docs, sistema de diseño (tokens + componentes CSS), mockups HTML.
 Salida: revisión de mockups y respuestas a preguntas abiertas.
 
-## F1 · Base + cuentas manuales 🟡 (código listo; falta conectar Supabase y deploy)
+## F1 · Base + cuentas manuales ✅ (publicada en miweb-personal.vercel.app)
 - Proyecto Next.js + Tailwind conectado a `tokens.css`.
 - Supabase: tablas, RLS, login magic link.
 - Componentes UI: botón, tarjeta, fila, pill, métrica, input, nav.
@@ -21,7 +21,7 @@ Salida: revisión de mockups y respuestas a preguntas abiertas.
 - Filtros de Gmail para reenvío automático.
 - Prueba con 5 comprobantes reales (uno por proveedor).
 
-## F3 · Metas de ahorro
+## F3 · Metas de ahorro ✅ (requiere ejecutar web/supabase/migrations/0002_metas.sql)
 - CRUD metas y aportes.
 - Barra de progreso, fecha estimada, gráfico plan vs real.
 - Simulador de crédito guardable en la meta.

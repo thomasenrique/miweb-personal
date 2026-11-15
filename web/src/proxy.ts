@@ -7,7 +7,17 @@ const PUBLICAS = ["/login", "/auth"];
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return NextResponse.next(); // modo demo
+  if (!url || !key || process.env.MODO_DEMO === "1") return NextResponse.next(); // modo demo
+
+  // Si Supabase devuelve el código del enlace mágico a otra ruta (p. ej. la Site URL "/"),
+  // lo mandamos al callback para canjearlo.
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && !request.nextUrl.pathname.startsWith("/auth/callback")) {
+    const cb = request.nextUrl.clone();
+    cb.pathname = "/auth/callback";
+    cb.search = `?code=${encodeURIComponent(code)}`;
+    return NextResponse.redirect(cb);
+  }
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, key, {

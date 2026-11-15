@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cerrarSesion } from "@/app/actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { Encabezado, Monto } from "@/components/ui";
 import { getProviders, modoDemo } from "@/lib/data";
 import type { ProviderFull } from "@/lib/types";
@@ -64,9 +65,17 @@ export default async function AjustesPage({ searchParams }: PageProps<"/ajustes"
         <Lista titulo="🙋 Personal" items={providers.filter((p) => p.category.grupo === "personal")} />
       </div>
       {!modoDemo && (
-        <form action={cerrarSesion}>
-          <button className="h-btn">Cerrar sesión</button>
-        </form>
+        <section className="h-card h-card--soft h-stack" style={{ marginTop: "var(--h-s7)" }}>
+          <h3>Sesión</h3>
+          <p className="h-muted" style={{ margin: 0 }}>
+            Al cerrar sesión necesitarás un enlace nuevo por correo para volver a entrar.
+          </p>
+          <form action={cerrarSesion}>
+            <ConfirmButton tono="neutro" mensaje="¿Cerrar sesión? Para volver a entrar necesitarás un enlace nuevo por correo.">
+              Cerrar sesión
+            </ConfirmButton>
+          </form>
+        </section>
       )}
     </>
   );

@@ -2,12 +2,18 @@
 
 import type { ReactNode } from "react";
 
-/** Botón de envío que pide confirmación antes de una acción destructiva. */
-export function ConfirmButton({ mensaje, children }: { mensaje: string; children: ReactNode }) {
+/** Botón de envío que pide confirmación antes de una acción destructiva o que cuesta revertir. */
+export function ConfirmButton({
+  mensaje, children, tono = "peligro",
+}: {
+  mensaje: string;
+  children: ReactNode;
+  tono?: "peligro" | "neutro";
+}) {
   return (
     <button
-      className="h-btn h-btn--ghost"
-      style={{ color: "var(--h-bad-text)" }}
+      className={tono === "peligro" ? "h-btn h-btn--ghost" : "h-btn"}
+      style={tono === "peligro" ? { color: "var(--h-bad-text)" } : undefined}
       onClick={(e) => {
         if (!window.confirm(mensaje)) e.preventDefault();
       }}

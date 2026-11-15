@@ -21,3 +21,7 @@ a { color: inherit; }
 .h-error { background: var(--h-bad-soft); color: var(--h-bad-text); padding: var(--h-s3) var(--h-s4); border-radius: var(--h-r-md); font-size: var(--h-fs-sm); }
 .h-banner { background: var(--h-accent-soft); color: var(--h-accent-text); padding: var(--h-s2) var(--h-s4); font-size: var(--h-fs-sm); text-align: center; }
 select.h-input { appearance: auto; }
+
+/* Formulario de meta: los campos de crédito solo se ven si el checkbox está marcado */
+.h-credito:has(input[name="usa_credito"]:not(:checked)) .h-credito-campos { display: none; }
+.h-credito:has(input[name="usa_credito"]:checked) .h-credito-off { display: none; }

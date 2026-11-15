@@ -1,7 +1,7 @@
 // Datos de ejemplo en memoria para usar la app sin Supabase (se pierden al reiniciar el servidor).
 import "server-only";
 import { addMeses, fechaVencimiento, hoyChile, periodoDe } from "./finanzas";
-import type { Bill, Category, Provider } from "./types";
+import type { Bill, Category, Contribution, Goal, Provider } from "./types";
 
 const cat = (id: string, nombre: string, icono: string, grupo: Category["grupo"], orden: number, es_suscripcion = false): Category =>
   ({ id, nombre, icono, grupo, orden, es_suscripcion });
@@ -60,6 +60,42 @@ function generarCuentas(): Bill[] {
   return out;
 }
 
+function generarMetas(): { goals: Goal[]; contributions: Contribution[] } {
+  const hoy = hoyChile();
+  const actual = periodoDe(hoy);
+  const inicio = `${addMeses(actual, -5)}-01`;
+  const goals: Goal[] = [
+    {
+      id: "auto", nombre: "Auto nuevo", icono: "🚗", precio_total: 16_000_000, meta_ahorro: 8_000_000,
+      aporte_mensual_plan: 380_000, fecha_inicio: inicio, fecha_objetivo: null,
+      usa_credito: true, tasa_anual: 14.5, n_cuotas: 36, estado: "activa",
+    },
+    {
+      id: "switch", nombre: "Nintendo Switch", icono: "🎮", precio_total: 350_000, meta_ahorro: 350_000,
+      aporte_mensual_plan: 50_000, fecha_inicio: `${addMeses(actual, -2)}-01`, fecha_objetivo: null,
+      usa_credito: false, tasa_anual: null, n_cuotas: null, estado: "activa",
+    },
+  ];
+  const montosAuto = [600_000, 350_000, 420_000, 380_000, 400_000, 350_000];
+  const contributions: Contribution[] = [
+    ...montosAuto.map((monto, i) => ({
+      id: `ca-${i}`, goal_id: "auto", monto, fecha: `${addMeses(actual, i - 5)}-12`, nota: i === 0 ? "Bono" : null,
+    })),
+    { id: "cs-0", goal_id: "switch", monto: 55_000, fecha: `${addMeses(actual, -2)}-05`, nota: null },
+    { id: "cs-1", goal_id: "switch", monto: 50_000, fecha: `${addMeses(actual, -1)}-05`, nota: null },
+  ];
+  return { goals, contributions };
+}
+
+type Store = {
+  categories: Category[];
+  providers: Provider[];
+  bills: Bill[];
+  goals: Goal[];
+  contributions: Contribution[];
+};
+
 // Un solo store por proceso (sobrevive a recargas en desarrollo).
-const g = globalThis as unknown as { __demoStore?: { categories: Category[]; providers: Provider[]; bills: Bill[] } };
-export const demo = (g.__demoStore ??= { categories, providers, bills: generarCuentas() });
+const g = globalThis as unknown as { __demoStore?: Store };
+if (g.__demoStore && !g.__demoStore.goals) Object.assign(g.__demoStore, generarMetas());
+export const demo: Store = (g.__demoStore ??= { categories, providers, bills: generarCuentas(), ...generarMetas() });

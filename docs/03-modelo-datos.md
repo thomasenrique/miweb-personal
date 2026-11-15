@@ -66,7 +66,8 @@ goals 1──* contributions
 | nombre | text | "Auto nuevo" |
 | icono | text | car, gamepad… |
 | precio_total | integer | |
-| meta_pie | integer | monto a ahorrar |
+| meta_ahorro | integer | monto a ahorrar (pie; sin crédito = precio total) |
+| fecha_inicio | date | desde cuándo cuenta el plan |
 | aporte_mensual_plan | integer | |
 | fecha_objetivo | date | opcional |
 | usa_credito | boolean | |
@@ -100,8 +101,8 @@ Proveedores reales, montos y días de vencimiento se cargan en la primera pantal
 - **Total del mes por grupo** = Σ bills.monto del periodo, agrupado por categories.grupo
 - **Costo mensual de suscripciones** = Σ mensuales + Σ anuales / 12
 - **Ahorrado** = Σ contributions.monto
-- **Progreso** = ahorrado / meta_pie
-- **Meses restantes** = ⌈(meta_pie − ahorrado) / aporte_mensual_plan⌉
+- **Progreso** = ahorrado / meta_ahorro
+- **Meses restantes** = ⌈(meta_ahorro − ahorrado) / aporte_mensual_plan⌉
 - **Cuota** (amortización francesa):
   `i = tasa_anual / 100 / 12`, `P = precio_total − pie`, `cuota = P · i / (1 − (1 + i)^−n)`; si `i = 0` → `P / n`
 - **Total crédito** = cuota · n; **intereses** = total − P

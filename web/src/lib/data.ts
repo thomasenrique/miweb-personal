@@ -2,7 +2,7 @@
 import "server-only";
 import { demo } from "./demo";
 import { crearSupabase, supabaseConfigurado } from "./supabase/server";
-import type { Bill, BillFull, Category, Provider, ProviderFull } from "./types";
+import type { Bill, BillFull, Category, Contribution, Goal, GoalFull, Provider, ProviderFull } from "./types";
 
 export const modoDemo = !supabaseConfigurado;
 
@@ -143,4 +143,90 @@ export async function deleteProvider(id: string): Promise<"eliminado" | "desacti
   }
   falla((await sb.from("providers").delete().eq("id", id)).error);
   return "eliminado";
+}
+
+// ——— Metas de ahorro ———
+
+export type GoalInput = Omit<Goal, "id">;
+export type ContributionInput = Omit<Contribution, "id">;
+
+function ordenarAportes(c: Contribution[]) {
+  return [...c].sort((a, b) => b.fecha.localeCompare(a.fecha));
+}
+
+export async function getGoals(): Promise<GoalFull[]> {
+  let list: GoalFull[];
+  if (modoDemo) {
+    list = demo.goals.map((g) => ({ ...g, contributions: demo.contributions.filter((c) => c.goal_id === g.id) }));
+  } else {
+    const sb = await crearSupabase();
+    const { data, error } = await sb.from("goals").select("*, contributions(*)");
+    falla(error);
+    list = (data as GoalFull[]).map((g) => ({ ...g, tasa_anual: g.tasa_anual == null ? null : Number(g.tasa_anual) }));
+  }
+  const orden = { activa: 0, pausada: 1, lograda: 2 } as const;
+  return list
+    .map((g) => ({ ...g, contributions: ordenarAportes(g.contributions) }))
+    .sort((a, b) => orden[a.estado] - orden[b.estado] || a.fecha_inicio.localeCompare(b.fecha_inicio));
+}
+
+export async function getGoal(id: string): Promise<GoalFull | null> {
+  return (await getGoals()).find((g) => g.id === id) ?? null;
+}
+
+/** Crea o actualiza una meta. Devuelve su id. */
+export async function saveGoal(id: string | null, input: GoalInput): Promise<string> {
+  if (modoDemo) {
+    if (id) {
+      const i = demo.goals.findIndex((g) => g.id === id);
+      if (i >= 0) demo.goals[i] = { ...input, id };
+      return id;
+    }
+    const nuevo = crypto.randomUUID();
+    demo.goals.push({ ...input, id: nuevo });
+    return nuevo;
+  }
+  const sb = await crearSupabase();
+  if (id) {
+    falla((await sb.from("goals").update(input).eq("id", id)).error);
+    return id;
+  }
+  const { data, error } = await sb.from("goals").insert(input).select("id").single();
+  falla(error);
+  return (data as { id: string }).id;
+}
+
+export async function updateGoalFields(id: string, campos: Partial<GoalInput>) {
+  if (modoDemo) {
+    const g = demo.goals.find((x) => x.id === id);
+    if (g) Object.assign(g, campos);
+    return;
+  }
+  const sb = await crearSupabase();
+  falla((await sb.from("goals").update(campos).eq("id", id)).error);
+}
+
+export async function deleteGoal(id: string) {
+  if (modoDemo) {
+    demo.goals = demo.goals.filter((g) => g.id !== id);
+    demo.contributions = demo.contributions.filter((c) => c.goal_id !== id);
+    return;
+  }
+  const sb = await crearSupabase();
+  falla((await sb.from("goals").delete().eq("id", id)).error);
+}
+
+export async function addContribution(input: ContributionInput) {
+  if (modoDemo) return void demo.contributions.push({ ...input, id: crypto.randomUUID() });
+  const sb = await crearSupabase();
+  falla((await sb.from("contributions").insert(input)).error);
+}
+
+export async function deleteContribution(id: string) {
+  if (modoDemo) {
+    demo.contributions = demo.contributions.filter((c) => c.id !== id);
+    return;
+  }
+  const sb = await crearSupabase();
+  falla((await sb.from("contributions").delete().eq("id", id)).error);
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { GoalCard } from "@/components/GoalCard";
 import { EstadoPill, Monto } from "@/components/ui";
-import { getBills, getProviders } from "@/lib/data";
+import { getBills, getGoals, getProviders } from "@/lib/data";
 import {
   calcularPendientes, formatCLP, hoyChile, periodoDe, textoVencimiento, totalPorGrupo, tituloPeriodo,
 } from "@/lib/finanzas";
@@ -8,7 +9,8 @@ import {
 export default async function InicioPage() {
   const hoy = hoyChile();
   const mes = periodoDe(hoy);
-  const [bills, providers] = await Promise.all([getBills([mes]), getProviders()]);
+  const [bills, providers, goals] = await Promise.all([getBills([mes]), getProviders(), getGoals().catch(() => [])]);
+  const metas = goals.filter((g) => g.estado === "activa").slice(0, 3);
   const t = totalPorGrupo(bills);
   const pendientes = calcularPendientes(providers, bills, mes, hoy);
   const revisar = bills.filter((b) => b.estado === "revisar");
@@ -65,11 +67,21 @@ export default async function InicioPage() {
           </section>
         )}
 
-        <section className="h-card h-card--soft">
-          <h3>🚗 Metas de ahorro</h3>
-          <p className="h-muted" style={{ marginBottom: 0 }}>El plan del auto y otras metas llegan en la fase 3.</p>
-        </section>
       </div>
+
+      <div className="h-row">
+        <h2>Metas</h2>
+        <Link className="h-btn h-btn--ghost" href="/metas">Ver todas ›</Link>
+      </div>
+      {metas.length === 0 ? (
+        <section className="h-card h-card--soft">
+          <p style={{ margin: 0 }}>Aún no tienes metas. <Link href="/metas/nueva">Crea la primera</Link>.</p>
+        </section>
+      ) : (
+        <div className="h-grid">
+          {metas.map((g) => <GoalCard key={g.id} goal={g} hoy={hoy} compacta />)}
+        </div>
+      )}
     </>
   );
 }
