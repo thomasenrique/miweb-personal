@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulador · Mi vida</title>
+<link rel="stylesheet" href="../design-system/tokens.css"><link rel="stylesheet" href="../design-system/components.css">
+</head><body>
+<nav class="h-nav">
+  <a href="#"><b>⌂</b>Inicio</a><a href="cuentas.html"><b>▤</b>Cuentas</a>
+  <a href="metas.html" aria-current="page"><b>◎</b>Metas</a><a href="componentes.html"><b>⚙</b>Ajustes</a>
+</nav>
+<main class="h-page h-stack">
+  <div class="h-row" style="justify-content:flex-start"><a class="h-btn h-btn--ghost" href="metas.html">‹</a><h1>Auto · crédito</h1></div>
+
+  <div class="h-grid">
+    <form class="h-card h-stack" oninput="calc()">
+      <div class="h-field"><label for="precio">Precio del auto</label><input class="h-input h-num" id="precio" inputmode="numeric" value="16.000.000"></div>
+      <div class="h-field"><label for="pie">Pie (tu ahorro)</label><input class="h-input h-num" id="pie" inputmode="numeric" value="8.000.000"></div>
+      <div class="h-field"><label for="tasa">Tasa anual %</label><input class="h-input h-num" id="tasa" inputmode="decimal" value="14,5"></div>
+      <div class="h-field"><label for="n">Cuotas: <b id="nv">36</b></label><input id="n" type="range" min="12" max="72" step="6" value="36" style="accent-color:var(--h-accent)"></div>
+    </form>
+
+    <section class="h-stack">
+      <div class="h-card h-card--accent">
+        <div class="h-metric__label">Cuota mensual</div>
+        <div class="h-metric__value" id="cuota">—</div>
+        <div class="h-muted" id="det"></div>
+      </div>
+      <div class="h-card">
+        <h3>Ahorro → crédito</h3>
+        <div style="display:flex;height:14px;border-radius:999px;overflow:hidden;margin:12px 0">
+          <span id="bp" style="background:var(--h-accent)"></span><span id="bc" style="background:var(--h-accent-soft)"></span>
+        </div>
+        <ul class="h-list">
+          <li><span class="h-grow">Financiado</span><span class="h-num" id="fin"></span></li>
+          <li><span class="h-grow">Total a pagar</span><span class="h-num" id="tot"></span></li>
+          <li><span class="h-grow">Intereses</span><span class="h-num" id="int"></span></li>
+        </ul>
+      </div>
+      <button class="h-btn h-btn--primary" type="button">Guardar escenario</button>
+    </section>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const num = s => +String(s).replace(/\./g, "").replace(",", ".") || 0;
+const clp = v => "$" + Math.round(v).toLocaleString("es-CL");
+function calc() {
+  const P = num($("precio").value), pie = Math.min(num($("pie").value), P);
+  const i = num($("tasa").value) / 100 / 12, n = +$("n").value, F = P - pie;
+  const c = F <= 0 ? 0 : i ? F * i / (1 - Math.pow(1 + i, -n)) : F / n;
+  $("nv").textContent = n;
+  $("cuota").textContent = clp(c);
+  $("det").textContent = n + " cuotas · " + $("tasa").value + "% anual";
+  $("fin").textContent = clp(F); $("tot").textContent = clp(c * n); $("int").textContent = clp(c * n - F);
+  const pp = P ? Math.round(pie / P * 100) : 0;
+  $("bp").style.width = pp + "%"; $("bc").style.width = (100 - pp) + "%";
+}
+calc();
+</script>
+</body></html>

@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.vercel/
+
+# Secretos: nunca subir
+.env
+.env*.local
+
+# Local
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
+npm-debug.log*

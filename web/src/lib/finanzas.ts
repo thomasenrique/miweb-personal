@@ -1,0 +1,185 @@
+// Lógica pura (sin dependencias de Next ni Supabase) para poder probarla con `node --test`.
+import type { BillFull, Grupo, ProviderFull } from "./types.ts";
+
+const ZONA = "America/Santiago";
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MESES_LARGOS = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
+/** $42.100 */
+export function formatCLP(n: number): string {
+  const v = Math.round(n);
+  return (v < 0 ? "-$" : "$") + Math.abs(v).toLocaleString("es-CL");
+}
+
+/** Convierte "$42.100", "42100" o "20,5" en número. NaN si no es válido. */
+export function parseMonto(s: string): number {
+  const limpio = s.replace(/[$\s]/g, "").replace(/\./g, "").replace(",", ".");
+  if (!/^\d+(\.\d+)?$/.test(limpio)) return NaN;
+  return Number(limpio);
+}
+
+/** Fecha de hoy en Chile, "YYYY-MM-DD". */
+export function hoyChile(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: ZONA }).format(now);
+}
+
+export function periodoDe(fecha: string): string {
+  return fecha.slice(0, 7);
+}
+
+export function esPeriodo(s: string | undefined | null): s is string {
+  return !!s && /^\d{4}-(0[1-9]|1[0-2])$/.test(s);
+}
+
+export function addMeses(periodo: string, n: number): string {
+  const [y, m] = periodo.split("-").map(Number);
+  const total = y * 12 + (m - 1) + n;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
+}
+
+/** Los últimos `n` periodos terminando en `periodo` (orden cronológico). */
+export function ultimosPeriodos(periodo: string, n: number): string[] {
+  return Array.from({ length: n }, (_, i) => addMeses(periodo, i - n + 1));
+}
+
+export function mesCorto(periodo: string): string {
+  return MESES[Number(periodo.slice(5, 7)) - 1];
+}
+
+export function tituloPeriodo(periodo: string, periodoHoy: string): string {
+  const nombre = MESES_LARGOS[Number(periodo.slice(5, 7)) - 1];
+  return periodo.slice(0, 4) === periodoHoy.slice(0, 4) ? nombre : `${nombre} ${periodo.slice(0, 4)}`;
+}
+
+/** "18 nov" */
+export function fechaCorta(fecha: string): string {
+  return `${Number(fecha.slice(8, 10))} ${MESES[Number(fecha.slice(5, 7)) - 1]}`;
+}
+
+function diasDelMes(periodo: string): number {
+  const [y, m] = periodo.split("-").map(Number);
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+/** Fecha de vencimiento dentro del periodo; el día 31 se ajusta al último día del mes. */
+export function fechaVencimiento(periodo: string, dia: number): string {
+  const d = Math.min(dia, diasDelMes(periodo));
+  return `${periodo}-${String(d).padStart(2, "0")}`;
+}
+
+export function diasEntre(desde: string, hasta: string): number {
+  return Math.round((Date.parse(hasta) - Date.parse(desde)) / 86_400_000);
+}
+
+/** ¿Este proveedor cobra en el periodo dado? */
+export function cobraEnPeriodo(p: ProviderFull, periodo: string): boolean {
+  if (!p.activo) return false;
+  if (p.frecuencia === "mensual") return true;
+  return p.mes_cobro === Number(periodo.slice(5, 7));
+}
+
+export type Pendiente = {
+  provider: ProviderFull;
+  vencimiento: string | null;
+  /** Días que faltan (negativo = vencido). null si no tiene día de vencimiento. */
+  dias: number | null;
+  montoEstimado: number;
+};
+
+/**
+ * Proveedores que cobran en el periodo y aún no tienen una cuenta registrada,
+ * más las cuentas registradas con estado "pendiente". Ordenados por vencimiento.
+ */
+export function calcularPendientes(
+  providers: ProviderFull[],
+  bills: BillFull[],
+  periodo: string,
+  hoy: string,
+): Pendiente[] {
+  const conCuenta = new Set(bills.filter((b) => b.periodo === periodo).map((b) => b.provider_id));
+  const out: Pendiente[] = [];
+  for (const p of providers) {
+    if (!cobraEnPeriodo(p, periodo) || conCuenta.has(p.id)) continue;
+    const vencimiento = p.dia_vencimiento ? fechaVencimiento(periodo, p.dia_vencimiento) : null;
+    out.push({
+      provider: p,
+      vencimiento,
+      dias: vencimiento ? diasEntre(hoy, vencimiento) : null,
+      montoEstimado: p.monto_estimado ?? 0,
+    });
+  }
+  return out.sort((a, b) => (a.vencimiento ?? "9999").localeCompare(b.vencimiento ?? "9999"));
+}
+
+export function textoVencimiento(p: Pendiente): string {
+  if (p.dias === null || !p.vencimiento) return "Sin día de vencimiento";
+  if (p.dias < 0) return `Vencida hace ${-p.dias} ${-p.dias === 1 ? "día" : "días"}`;
+  if (p.dias === 0) return "Vence hoy";
+  if (p.dias === 1) return "Vence mañana";
+  if (p.dias <= 7) return `Vence en ${p.dias} días`;
+  return `Vence el ${fechaCorta(p.vencimiento)}`;
+}
+
+/** Cuentas que cuentan como gasto realizado (pagadas o por revisar). */
+export function cuentasDelGasto(bills: BillFull[]): BillFull[] {
+  return bills.filter((b) => b.estado !== "pendiente");
+}
+
+export function totalPorGrupo(bills: BillFull[]): Record<Grupo, number> {
+  const t: Record<Grupo, number> = { hogar: 0, personal: 0 };
+  for (const b of cuentasDelGasto(bills)) t[b.provider.category.grupo] += b.monto;
+  return t;
+}
+
+export type TotalCategoria = { id: string; nombre: string; icono: string; total: number };
+
+export function totalPorCategoria(bills: BillFull[]): TotalCategoria[] {
+  const m = new Map<string, TotalCategoria>();
+  for (const b of cuentasDelGasto(bills)) {
+    const c = b.provider.category;
+    const t = m.get(c.id) ?? { id: c.id, nombre: c.nombre, icono: c.icono, total: 0 };
+    t.total += b.monto;
+    m.set(c.id, t);
+  }
+  return [...m.values()].sort((a, b) => b.total - a.total);
+}
+
+export function totalPorPeriodo(bills: BillFull[], periodos: string[]): number[] {
+  return periodos.map((p) =>
+    cuentasDelGasto(bills)
+      .filter((b) => b.periodo === p)
+      .reduce((s, b) => s + b.monto, 0),
+  );
+}
+
+/** Variación porcentual redondeada; null si no hay base. */
+export function variacion(actual: number, anterior: number): number | null {
+  if (anterior <= 0) return null;
+  return Math.round(((actual - anterior) / anterior) * 100);
+}
+
+/** Costo mensual equivalente de una suscripción (anual / 12). */
+export function costoMensual(p: ProviderFull): number {
+  const m = p.monto_estimado ?? 0;
+  return p.frecuencia === "anual" ? Math.round(m / 12) : m;
+}
+
+export function resumenSuscripciones(providers: ProviderFull[]) {
+  const subs = providers.filter((p) => p.activo && p.category.es_suscripcion);
+  const mensual = subs.reduce((s, p) => s + costoMensual(p), 0);
+  return { subs, mensual, anual: mensual * 12 };
+}
+
+export function filtrarGrupo<T extends { provider: ProviderFull } | ProviderFull>(
+  items: T[],
+  grupo: Grupo | "todo",
+): T[] {
+  if (grupo === "todo") return items;
+  return items.filter((i) => {
+    const p: ProviderFull = "provider" in i ? i.provider : (i as ProviderFull);
+    return p.category.grupo === grupo;
+  });
+}

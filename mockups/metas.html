@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Metas · Mi vida</title>
+<link rel="stylesheet" href="../design-system/tokens.css"><link rel="stylesheet" href="../design-system/components.css">
+</head><body>
+<nav class="h-nav">
+  <a href="#"><b>⌂</b>Inicio</a><a href="cuentas.html"><b>▤</b>Cuentas</a>
+  <a href="metas.html" aria-current="page"><b>◎</b>Metas</a><a href="componentes.html"><b>⚙</b>Ajustes</a>
+</nav>
+<main class="h-page h-stack">
+  <div class="h-row"><h1>Metas</h1><button class="h-btn h-btn--primary">+ Nueva meta</button></div>
+
+  <div class="h-grid">
+    <section class="h-card">
+      <div class="h-row"><span class="h-ico">🚗</span><span style="flex:1"><b>Auto nuevo</b><br><span class="h-muted">Pie + crédito</span></span><span class="h-pill h-pill--accent">62%</span></div>
+      <div class="h-metric__value" style="margin-top:12px">$4.960.000</div>
+      <div class="h-muted">de $8.000.000 de pie</div>
+      <div class="h-progress" style="margin:12px 0"><span style="width:62%"></span></div>
+      <div class="h-muted">A $380.000/mes llegas en <b>ago 2027</b> (8 meses)</div>
+      <div class="h-row" style="margin-top:12px;justify-content:flex-start">
+        <button class="h-btn">+ Aporte</button><a class="h-btn h-btn--ghost" href="simulador.html">Ver crédito ›</a>
+      </div>
+    </section>
+    <section class="h-card">
+      <div class="h-row"><span class="h-ico">🎮</span><span style="flex:1"><b>Nintendo Switch</b><br><span class="h-muted">Solo ahorro</span></span><span class="h-pill h-pill--accent">30%</span></div>
+      <div class="h-metric__value" style="margin-top:12px">$105.000</div>
+      <div class="h-muted">de $350.000</div>
+      <div class="h-progress" style="margin:12px 0"><span style="width:30%;background:var(--h-cat-2)"></span></div>
+      <div class="h-muted">A $50.000/mes llegas en <b>may 2027</b></div>
+      <div class="h-row" style="margin-top:12px;justify-content:flex-start"><button class="h-btn">+ Aporte</button></div>
+    </section>
+  </div>
+
+  <section class="h-card">
+    <h3>Auto nuevo · plan vs real</h3>
+    <svg viewBox="0 0 300 100" width="100%" height="120" role="img" aria-label="Ahorro planeado versus real">
+      <polyline fill="none" stroke="var(--h-border-strong)" stroke-width="2" stroke-dasharray="4 4" points="0,95 50,80 100,65 150,50 200,35 250,20 300,5"/>
+      <polyline fill="none" stroke="var(--h-accent)" stroke-width="3" stroke-linecap="round" points="0,95 50,82 100,70 150,58 175,45"/>
+      <circle cx="175" cy="45" r="5" fill="var(--h-accent)"/>
+    </svg>
+    <div class="h-muted">— real &nbsp; - - plan · vas 2% adelantado</div>
+  </section>
+
+  <section class="h-card">
+    <h3>Últimos aportes · Auto</h3>
+    <ul class="h-list">
+      <li><span class="h-grow">12 nov <span class="h-muted">· sueldo</span></span><span class="h-num">+$400.000</span></li>
+      <li><span class="h-grow">15 oct</span><span class="h-num">+$350.000</span></li>
+      <li><span class="h-grow">14 sep <span class="h-muted">· bono</span></span><span class="h-num">+$600.000</span></li>
+    </ul>
+  </section>
+</main>
+</body></html>

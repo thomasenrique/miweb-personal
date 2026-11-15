@@ -1,0 +1,23 @@
+@import "../../../design-system/tokens.css";
+@import "tailwindcss";
+@import "../../../design-system/components.css";
+
+/* Tailwind usa los tokens de Hogar UI */
+@theme inline {
+  --color-bg: var(--h-bg);
+  --color-surface: var(--h-surface);
+  --color-surface-2: var(--h-surface-2);
+  --color-line: var(--h-border);
+  --color-ink: var(--h-text);
+  --color-ink-2: var(--h-text-2);
+  --color-accent: var(--h-accent);
+  --font-sans: var(--h-font);
+}
+
+/* Ajustes propios de la app */
+a { color: inherit; }
+.h-link-row { text-decoration: none; color: inherit; }
+.h-link-row:hover .h-grow b { text-decoration: underline; }
+.h-error { background: var(--h-bad-soft); color: var(--h-bad-text); padding: var(--h-s3) var(--h-s4); border-radius: var(--h-r-md); font-size: var(--h-fs-sm); }
+.h-banner { background: var(--h-accent-soft); color: var(--h-accent-text); padding: var(--h-s2) var(--h-s4); font-size: var(--h-fs-sm); text-align: center; }
+select.h-input { appearance: auto; }

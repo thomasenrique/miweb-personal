@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cuentas · Mi vida</title>
+<link rel="stylesheet" href="../design-system/tokens.css"><link rel="stylesheet" href="../design-system/components.css">
+</head><body>
+<nav class="h-nav">
+  <a href="#"><b>⌂</b>Inicio</a><a href="cuentas.html" aria-current="page"><b>▤</b>Cuentas</a>
+  <a href="metas.html"><b>◎</b>Metas</a><a href="componentes.html"><b>⚙</b>Ajustes</a>
+</nav>
+<main class="h-page h-stack">
+  <div class="h-row"><button class="h-btn h-btn--ghost">‹</button><h1>Noviembre</h1><button class="h-btn h-btn--ghost">›</button></div>
+
+  <div class="h-seg" role="group" aria-label="Filtrar gastos">
+    <button aria-pressed="true">Todo</button><button aria-pressed="false">Hogar</button><button aria-pressed="false">Personal</button>
+  </div>
+
+  <div class="h-alert">⏰ <span><b>2 por pagar:</b> Agua vence en 3 días · Gas vence el 22 nov</span></div>
+
+  <div class="h-grid">
+    <section class="h-card">
+      <div class="h-metric__label">Pagado este mes</div>
+      <div class="h-metric__value">$203.690</div>
+      <div class="h-muted">+6% vs octubre · faltan ~$38.000</div>
+      <div style="display:flex;height:8px;border-radius:999px;overflow:hidden;margin-top:10px"><span style="width:90%;background:var(--h-accent)"></span><span style="width:10%;background:var(--h-cat-3)"></span></div>
+      <div class="h-row h-muted" style="margin-top:4px"><span>● Hogar $184.320</span><span style="color:var(--h-cat-3)">● Personal $19.370</span></div>
+      <div class="h-bars" style="margin-top:16px">
+        <div><span style="height:55%"></span><small>jun</small></div><div><span style="height:62%"></span><small>jul</small></div>
+        <div><span style="height:80%"></span><small>ago</small></div><div><span style="height:70%"></span><small>sep</small></div>
+        <div><span style="height:74%"></span><small>oct</small></div><div class="is-now"><span style="height:78%"></span><small>nov</small></div>
+      </div>
+    </section>
+    <section class="h-card">
+      <h3>Por categoría</h3>
+      <ul class="h-list">
+        <li><span class="h-ico">💡</span><span class="h-grow">Luz</span><span class="h-num">$42.100</span></li>
+        <li><span class="h-ico">🏢</span><span class="h-grow">Gastos comunes</span><span class="h-num">$89.000</span></li>
+        <li><span class="h-ico">📶</span><span class="h-grow">Internet</span><span class="h-num">$24.990</span></li>
+        <li><span class="h-ico">📱</span><span class="h-grow">Teléfono</span><span class="h-num">$28.230</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <section class="h-card">
+    <div class="h-row"><h3>Cuentas del mes</h3><button class="h-btn h-btn--primary">+ Agregar</button></div>
+    <ul class="h-list">
+      <li><span class="h-ico">💡</span><span class="h-grow"><b>Enel</b><br><span class="h-muted">Pagado 05 nov · ✉ correo</span></span><span class="h-num">$42.100</span><span class="h-pill h-pill--ok">Pagado</span></li>
+      <li><span class="h-ico">📶</span><span class="h-grow"><b>Movistar Hogar</b><br><span class="h-muted">Pagado 08 nov · ✉ correo</span></span><span class="h-num">$24.990</span><span class="h-pill h-pill--ok">Pagado</span></li>
+      <li><span class="h-ico">📱</span><span class="h-grow"><b>Entel</b><br><span class="h-muted">Monto no detectado</span></span><span class="h-num">$28.230</span><span class="h-pill h-pill--accent">Por revisar</span></li>
+      <li><span class="h-ico">💧</span><span class="h-grow"><b>Aguas Andinas</b><br><span class="h-muted">Vence 18 nov · estimado</span></span><span class="h-num">$15.800</span><span class="h-pill h-pill--warn">Pendiente</span></li>
+      <li><span class="h-ico">🔥</span><span class="h-grow"><b>Metrogas</b><br><span class="h-muted">Vence 22 nov · estimado</span></span><span class="h-num">$22.000</span><span class="h-pill h-pill--warn">Pendiente</span></li>
+    </ul>
+  </section>
+
+  <section class="h-card">
+    <div class="h-row"><h3>Suscripciones</h3><span class="h-muted">$19.370/mes · $232.440/año</span></div>
+    <ul class="h-list">
+      <li><span class="h-ico">✳</span><span class="h-grow"><b>Claude</b><br><span class="h-muted">Día 12 · US$20 × $468,50</span></span><span class="h-num">$9.370</span><span class="h-pill h-pill--ok">Pagado</span></li>
+      <li><span class="h-ico">▶</span><span class="h-grow"><b>YouTube Premium</b><br><span class="h-muted">Día 7 · mensual</span></span><span class="h-num">$4.150</span><span class="h-pill h-pill--ok">Pagado</span></li>
+      <li><span class="h-ico">♫</span><span class="h-grow"><b>Spotify</b><br><span class="h-muted">Día 3 · mensual</span></span><span class="h-num">$5.850</span><span class="h-pill h-pill--ok">Pagado</span></li>
+    </ul>
+  </section>
+
+  <section class="h-card h-card--soft">
+    <b>Registro automático</b>
+    <p class="h-muted" style="margin:4px 0 0">Reenvía tus comprobantes a <b>a1b2c3@inbound.postmarkapp.com</b> y quedan registrados solos.</p>
+  </section>
+</main>
+</body></html>

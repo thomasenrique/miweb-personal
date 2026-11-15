@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hogar UI · componentes</title>
+<link rel="stylesheet" href="../design-system/tokens.css"><link rel="stylesheet" href="../design-system/components.css">
+<style>.sw{height:48px;border-radius:12px;border:1px solid var(--h-border)}.sw+small{display:block;font-size:12px;color:var(--h-text-2);margin-top:4px}</style>
+</head><body>
+<nav class="h-nav">
+  <a href="#"><b>⌂</b>Inicio</a><a href="cuentas.html"><b>▤</b>Cuentas</a>
+  <a href="metas.html"><b>◎</b>Metas</a><a href="componentes.html" aria-current="page"><b>⚙</b>Ajustes</a>
+</nav>
+<main class="h-page h-stack">
+  <div class="h-row"><h1>Hogar UI</h1><button class="h-btn" onclick="t()">Claro / oscuro</button></div>
+  <p class="h-muted">Vitrina del sistema de diseño. Todo sale de tokens.css.</p>
+
+  <section class="h-card"><h3>Color</h3>
+    <div class="h-grid" style="grid-template-columns:repeat(auto-fit,minmax(90px,1fr));margin-top:12px">
+      <div><div class="sw" style="background:var(--h-bg)"></div><small>bg</small></div>
+      <div><div class="sw" style="background:var(--h-surface-2)"></div><small>surface-2</small></div>
+      <div><div class="sw" style="background:var(--h-accent)"></div><small>accent</small></div>
+      <div><div class="sw" style="background:var(--h-accent-soft)"></div><small>accent-soft</small></div>
+      <div><div class="sw" style="background:var(--h-ok)"></div><small>ok</small></div>
+      <div><div class="sw" style="background:var(--h-warn)"></div><small>warn</small></div>
+      <div><div class="sw" style="background:var(--h-bad)"></div><small>bad</small></div>
+      <div><div class="sw" style="background:var(--h-text)"></div><small>text</small></div>
+    </div>
+  </section>
+
+  <section class="h-card h-stack"><h3>Tipografía · Nunito</h3>
+    <div class="h-metric__value">$1.234.567</div><h1>Título 28</h1><h2>Subtítulo 20</h2>
+    <p style="margin:0">Texto normal 16. Frases cortas y cercanas.</p><p class="h-muted" style="margin:0">Texto secundario 14</p>
+  </section>
+
+  <section class="h-card h-stack"><h3>Botones y etiquetas</h3>
+    <div class="h-row" style="justify-content:flex-start;flex-wrap:wrap">
+      <button class="h-btn h-btn--primary">Agregar cuenta</button><button class="h-btn">Secundario</button><button class="h-btn h-btn--ghost">Fantasma</button>
+    </div>
+    <div class="h-row" style="justify-content:flex-start;flex-wrap:wrap">
+      <span class="h-pill h-pill--ok">Pagado</span><span class="h-pill h-pill--warn">Pendiente</span><span class="h-pill h-pill--bad">Vencido</span><span class="h-pill h-pill--accent">Por revisar</span>
+    </div>
+    <div class="h-alert">⏰ Agua vence en 3 días</div>
+  </section>
+
+  <div class="h-grid">
+    <section class="h-card h-stack"><h3>Formulario</h3>
+      <div class="h-field"><label for="a">Monto</label><input class="h-input h-num" id="a" placeholder="$42.100"></div>
+      <div class="h-field"><label for="b">Proveedor</label><input class="h-input" id="b" placeholder="Enel"></div>
+    </section>
+    <section class="h-card h-stack"><h3>Progreso y métrica</h3>
+      <div class="h-metric__label">Ahorrado</div><div class="h-metric__value">62%</div>
+      <div class="h-progress"><span style="width:62%"></span></div>
+      <ul class="h-list"><li><span class="h-ico">💡</span><span class="h-grow">Fila de lista</span><span class="h-num">$42.100</span></li></ul>
+    </section>
+  </div>
+</main>
+<script>
+function t(){const r=document.documentElement,d=r.dataset.theme==="dark"||(!r.dataset.theme&&matchMedia("(prefers-color-scheme: dark)").matches);r.dataset.theme=d?"light":"dark"}
+</script>
+</body></html>

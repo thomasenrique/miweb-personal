@@ -1,0 +1,84 @@
+/* Hogar UI · tokens (fuente única de verdad). Prefijo --h- */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap");
+
+:root {
+  /* Superficies */
+  --h-bg: #FBF7F2;
+  --h-surface: #FFFFFF;
+  --h-surface-2: #F4EEE6;
+  --h-border: #E8DFD4;
+  --h-border-strong: #D6C9BA;
+
+  /* Texto */
+  --h-text: #2E2620;
+  --h-text-2: #6F6359;
+  --h-text-muted: #A3978C;
+
+  /* Acento (terracota) */
+  --h-accent: #D2603A;
+  --h-accent-hover: #B84F2C;
+  --h-accent-soft: #FBE6DC;
+  --h-accent-text: #9A3F20;
+  --h-on-accent: #FFFFFF;
+
+  /* Estados */
+  --h-ok: #3E8E5E;      --h-ok-soft: #E3F2E8;   --h-ok-text: #2B6B44;
+  --h-warn: #C98A1B;    --h-warn-soft: #FCF1DA; --h-warn-text: #8A5C0A;
+  --h-bad: #C2453D;     --h-bad-soft: #FBE4E2;  --h-bad-text: #92302A;
+
+  /* Categorías (gráficos, iconos) */
+  --h-cat-1: #D2603A; --h-cat-2: #3E8E5E; --h-cat-3: #4D7FB8;
+  --h-cat-4: #C98A1B; --h-cat-5: #9A6BB8; --h-cat-6: #8C7F74;
+
+  /* Tipografía */
+  --h-font: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --h-fs-xs: 12px; --h-fs-sm: 14px; --h-fs-md: 16px;
+  --h-fs-lg: 20px; --h-fs-xl: 28px; --h-fs-2xl: 36px;
+  --h-fw: 400; --h-fw-bold: 700;
+  --h-lh: 1.5;
+
+  /* Espacios (base 4) */
+  --h-s1: 4px; --h-s2: 8px; --h-s3: 12px; --h-s4: 16px;
+  --h-s5: 24px; --h-s6: 32px; --h-s7: 48px;
+
+  /* Radios */
+  --h-r-sm: 8px; --h-r-md: 12px; --h-r-lg: 16px; --h-r-pill: 999px;
+
+  /* Sombra (una sola, suave) */
+  --h-shadow: 0 1px 2px rgb(46 38 32 / .06), 0 4px 12px rgb(46 38 32 / .05);
+
+  /* Movimiento */
+  --h-dur: 160ms; --h-ease: cubic-bezier(.2, .8, .2, 1);
+
+  /* Layout */
+  --h-max: 960px; --h-nav-h: 64px; --h-tap: 44px;
+  color-scheme: light;
+}
+
+/* Modo oscuro: automático por sistema, o forzado con <html data-theme="dark|light"> */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --h-bg: #1E1915; --h-surface: #29221D; --h-surface-2: #332A24;
+    --h-border: #40362F; --h-border-strong: #54483F;
+    --h-text: #F4ECE4; --h-text-2: #C2B4A7; --h-text-muted: #8C7F74;
+    --h-accent: #EE8A63; --h-accent-hover: #F4A281; --h-accent-soft: #4A2B1F;
+    --h-accent-text: #F7B79B; --h-on-accent: #1E1915;
+    --h-ok: #7CC79A; --h-ok-soft: #1F3628; --h-ok-text: #A6DDBA;
+    --h-warn: #E9B54F; --h-warn-soft: #3D2F12; --h-warn-text: #F2CF85;
+    --h-bad: #EE8079; --h-bad-soft: #45201D; --h-bad-text: #F5ABA6;
+    --h-shadow: 0 1px 2px rgb(0 0 0 / .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --h-bg: #1E1915; --h-surface: #29221D; --h-surface-2: #332A24;
+  --h-border: #40362F; --h-border-strong: #54483F;
+  --h-text: #F4ECE4; --h-text-2: #C2B4A7; --h-text-muted: #8C7F74;
+  --h-accent: #EE8A63; --h-accent-hover: #F4A281; --h-accent-soft: #4A2B1F;
+  --h-accent-text: #F7B79B; --h-on-accent: #1E1915;
+  --h-ok: #7CC79A; --h-ok-soft: #1F3628; --h-ok-text: #A6DDBA;
+  --h-warn: #E9B54F; --h-warn-soft: #3D2F12; --h-warn-text: #F2CF85;
+  --h-bad: #EE8079; --h-bad-soft: #45201D; --h-bad-text: #F5ABA6;
+  --h-shadow: 0 1px 2px rgb(0 0 0 / .3);
+  color-scheme: dark;
+}
