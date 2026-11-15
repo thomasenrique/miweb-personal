@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { GoalCard } from "@/components/GoalCard";
+import { AlertaVencimientos, FilaPendiente } from "@/components/Pendientes";
 import { EstadoPill, Monto } from "@/components/ui";
 import { getBills, getGoals, getProviders } from "@/lib/data";
 import {
-  calcularPendientes, formatCLP, hoyChile, periodoDe, textoVencimiento, totalPorGrupo, tituloPeriodo,
+  alertasVencimiento, calcularPendientes, formatCLP, hoyChile, periodoDe, totalPorGrupo, tituloPeriodo,
 } from "@/lib/finanzas";
 
-export default async function InicioPage() {
+export default async function InicioPage({ searchParams }: PageProps<"/">) {
+  const { aviso } = await searchParams;
   const hoy = hoyChile();
   const mes = periodoDe(hoy);
   const [bills, providers, goals] = await Promise.all([getBills([mes]), getProviders(), getGoals().catch(() => [])]);
@@ -18,6 +20,10 @@ export default async function InicioPage() {
   return (
     <>
       <h1>Hola 👋</h1>
+
+      {aviso === "pagada" && <p className="h-card h-card--soft" role="status">Cuenta registrada como pagada ✓</p>}
+      {aviso === "aporte" && <p className="h-card h-card--soft" role="status">Aporte registrado ✓</p>}
+      <AlertaVencimientos alertas={alertasVencimiento(pendientes)} />
 
       <section className="h-card">
         <div className="h-metric__label">Pagado en {tituloPeriodo(mes, mes).toLowerCase()}</div>
@@ -37,13 +43,7 @@ export default async function InicioPage() {
           ) : (
             <ul className="h-list">
               {pendientes.slice(0, 4).map((p) => (
-                <li key={p.provider.id}>
-                  <Link href={`/cuentas/nueva?mes=${mes}&proveedor=${p.provider.id}`} className="h-link-row" style={{ display: "contents" }}>
-                    <span className="h-ico" aria-hidden="true">{p.provider.category.icono}</span>
-                    <span className="h-grow"><b>{p.provider.nombre}</b><br /><span className="h-muted">{textoVencimiento(p)}</span></span>
-                    <Monto valor={p.montoEstimado} />
-                  </Link>
-                </li>
+                <FilaPendiente key={p.provider.id} p={p} mes={mes} volver="/" />
               ))}
             </ul>
           )}
@@ -79,7 +79,7 @@ export default async function InicioPage() {
         </section>
       ) : (
         <div className="h-grid">
-          {metas.map((g) => <GoalCard key={g.id} goal={g} hoy={hoy} compacta />)}
+          {metas.map((g) => <GoalCard key={g.id} goal={g} hoy={hoy} compacta volver="/" />)}
         </div>
       )}
     </>

@@ -7,7 +7,8 @@ import { hoyChile } from "@/lib/finanzas";
 
 export const metadata: Metadata = { title: "Metas" };
 
-export default async function MetasPage() {
+export default async function MetasPage({ searchParams }: PageProps<"/metas">) {
+  const { aviso } = await searchParams;
   const hoy = hoyChile();
   let goals;
   try {
@@ -28,6 +29,7 @@ export default async function MetasPage() {
         titulo="Metas"
         accion={<Link className="h-btn h-btn--primary" href="/metas/nueva">+ Nueva meta</Link>}
       />
+      {aviso === "aporte" && <p className="h-card h-card--soft" role="status">Aporte registrado ✓</p>}
       {goals.length === 0 ? (
         <section className="h-card h-stack">
           <h3>Crea tu primera meta</h3>

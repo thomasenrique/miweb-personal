@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Barras, EstadoPill, Monto } from "@/components/ui";
+import { AlertaVencimientos, FilaPendiente } from "@/components/Pendientes";
 import { getBills, getProviders } from "@/lib/data";
 import {
-  addMeses, calcularPendientes, esPeriodo, fechaCorta, filtrarGrupo, formatCLP, hoyChile,
-  mesCorto, periodoDe, resumenSuscripciones, textoVencimiento, totalPorCategoria,
+  addMeses, alertasVencimiento, calcularPendientes, esPeriodo, fechaCorta, filtrarGrupo, formatCLP, hoyChile,
+  mesCorto, periodoDe, resumenSuscripciones, totalPorCategoria,
   totalPorGrupo, totalPorPeriodo, tituloPeriodo, ultimosPeriodos, variacion,
 } from "@/lib/finanzas";
 import type { Grupo } from "@/lib/types";
@@ -35,7 +36,6 @@ export default async function CuentasPage({ searchParams }: PageProps<"/cuentas"
   const cambio = variacion(total, totales[4]);
   const porGrupo = totalPorGrupo(todasCuentas.filter((b) => b.periodo === mes));
   const pendientes = mes <= actual ? calcularPendientes(filtrarGrupo(todosProv, grupo), cuentas, mes, hoy) : [];
-  const urgentes = pendientes.filter((p) => p.dias !== null && p.dias <= 7);
   const faltan = pendientes.reduce((s, p) => s + p.montoEstimado, 0);
   const subs = resumenSuscripciones(todosProv);
   const subsPagadas = new Map(todasCuentas.filter((b) => b.periodo === mes).map((b) => [b.provider_id, b]));
@@ -56,11 +56,8 @@ export default async function CuentasPage({ searchParams }: PageProps<"/cuentas"
         ))}
       </nav>
 
-      {urgentes.length > 0 && (
-        <div className="h-alert" role="status">
-          ⏰ <span><b>{urgentes.length} por pagar:</b> {urgentes.map((p) => `${p.provider.nombre} — ${textoVencimiento(p).toLowerCase()}`).join(" · ")}</span>
-        </div>
-      )}
+      {sp.aviso === "pagada" && <p className="h-card h-card--soft" role="status">Cuenta registrada como pagada ✓</p>}
+      <AlertaVencimientos alertas={alertasVencimiento(pendientes)} />
 
       <div className="h-grid">
         <section className="h-card">
@@ -133,18 +130,7 @@ export default async function CuentasPage({ searchParams }: PageProps<"/cuentas"
               </li>
             ))}
             {pendientes.map((p) => (
-              <li key={`p-${p.provider.id}`}>
-                <Link href={`/cuentas/nueva?mes=${mes}&proveedor=${p.provider.id}`} className="h-link-row" style={{ display: "contents" }}>
-                  <span className="h-ico" aria-hidden="true">{p.provider.category.icono}</span>
-                  <span className="h-grow">
-                    <b>{p.provider.nombre}</b>
-                    <br />
-                    <span className="h-muted">{textoVencimiento(p)} · estimado</span>
-                  </span>
-                  <Monto valor={p.montoEstimado} />
-                  <EstadoPill estado={p.dias !== null && p.dias < 0 ? "vencida" : "pendiente"} />
-                </Link>
-              </li>
+              <FilaPendiente key={`p-${p.provider.id}`} p={p} mes={mes} volver={url({})} conEstado />
             ))}
           </ul>
         )}

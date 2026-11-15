@@ -1,5 +1,5 @@
 // Lógica pura (sin dependencias de Next ni Supabase) para poder probarla con `node --test`.
-import type { BillFull, Grupo, ProviderFull } from "./types.ts";
+import type { Bill, BillFull, Grupo, ProviderFull } from "./types.ts";
 
 const ZONA = "America/Santiago";
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -121,6 +121,39 @@ export function textoVencimiento(p: Pendiente): string {
   if (p.dias === 1) return "Vence mañana";
   if (p.dias <= 7) return `Vence en ${p.dias} días`;
   return `Vence el ${fechaCorta(p.vencimiento)}`;
+}
+
+export type Alertas = { vencidas: Pendiente[]; proximas: Pendiente[] };
+
+/** Separa los pendientes vencidos de los que vencen dentro de la ventana (por defecto 7 días). */
+export function alertasVencimiento(pendientes: Pendiente[], ventanaDias = 7): Alertas {
+  const conDia = pendientes.filter((p): p is Pendiente & { dias: number } => p.dias !== null);
+  return {
+    vencidas: conDia.filter((p) => p.dias < 0),
+    proximas: conDia.filter((p) => p.dias >= 0 && p.dias <= ventanaDias),
+  };
+}
+
+/**
+ * Cuenta "pagada" armada a partir del proveedor y su monto estimado, para registrar con un toque.
+ * Devuelve null si el proveedor no tiene monto estimado (hay que usar el formulario completo).
+ * El monto estimado siempre está en CLP, así que la cuenta se guarda en CLP.
+ */
+export function cuentaPagadaRapida(p: ProviderFull, periodo: string, hoy: string): Omit<Bill, "id"> | null {
+  if (!p.monto_estimado || p.monto_estimado <= 0) return null;
+  return {
+    provider_id: p.id,
+    monto: Math.round(p.monto_estimado),
+    moneda_original: "CLP",
+    monto_original: null,
+    tipo_cambio: null,
+    fecha_pago: hoy,
+    periodo,
+    fecha_vencimiento: p.dia_vencimiento ? fechaVencimiento(periodo, p.dia_vencimiento) : null,
+    estado: "pagado",
+    fuente: "manual",
+    notas: "Pago rápido con el monto estimado",
+  };
 }
 
 /** Cuentas que cuentan como gasto realizado (pagadas o por revisar). */

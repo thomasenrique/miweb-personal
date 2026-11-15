@@ -7,11 +7,16 @@ import {
   updateBill, updateProvider, type BillInput, type ProviderInput,
 } from "@/lib/data";
 import { dolarDelDia } from "@/lib/dolar";
-import { esPeriodo, parseMonto, periodoDe } from "@/lib/finanzas";
+import { cuentaPagadaRapida, esPeriodo, hoyChile, parseMonto, periodoDe } from "@/lib/finanzas";
 import { crearSupabase } from "@/lib/supabase/server";
 import type { EstadoCuenta, Frecuencia, Moneda } from "@/lib/types";
 
 const texto = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
+
+/** Solo rutas internas ("/algo"), nunca "//otro-sitio" ni URLs completas. */
+function destinoSeguro(ruta: string, porDefecto: string): string {
+  return /^\/(?!\/)[\w\-/?=&%.]*$/.test(ruta) ? ruta : porDefecto;
+}
 
 function volverConError(ruta: string, msg: string): never {
   redirect(`${ruta}${ruta.includes("?") ? "&" : "?"}error=${encodeURIComponent(msg)}`);
@@ -81,6 +86,28 @@ export async function guardarCuenta(form: FormData) {
     volverConError(volver, `No se pudo guardar: ${(e as Error).message}`);
   }
   redirect(`/cuentas?mes=${periodo}`);
+}
+
+/** Registra como pagada una cuenta pendiente usando el monto estimado del proveedor. */
+export async function marcarPagada(form: FormData) {
+  const provider_id = texto(form, "provider_id");
+  const periodo = texto(form, "periodo");
+  const volver = destinoSeguro(texto(form, "volver"), "/cuentas");
+  if (!esPeriodo(periodo)) volverConError(volver, "Mes no válido.");
+
+  const provider = await getProvider(provider_id);
+  if (!provider) volverConError(volver, "No encontré el proveedor.");
+  const input = cuentaPagadaRapida(provider, periodo, hoyChile());
+  if (!input) {
+    // Sin monto estimado no hay nada que registrar con un toque: abrimos el formulario completo.
+    redirect(`/cuentas/nueva?mes=${periodo}&proveedor=${provider_id}`);
+  }
+  try {
+    await createBill(input);
+  } catch (e) {
+    volverConError(volver, `No se pudo registrar el pago: ${(e as Error).message}`);
+  }
+  redirect(`${volver}${volver.includes("?") ? "&" : "?"}aviso=pagada`);
 }
 
 export async function eliminarCuenta(form: FormData) {

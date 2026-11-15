@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  addMeses, calcularPendientes, costoMensual, fechaVencimiento, formatCLP, hoyChile,
+  addMeses, alertasVencimiento, cuentaPagadaRapida, calcularPendientes, costoMensual, fechaVencimiento, formatCLP, hoyChile,
   parseMonto, resumenSuscripciones, textoVencimiento, totalPorCategoria, totalPorGrupo,
   ultimosPeriodos, variacion,
 } from "./finanzas.ts";
@@ -79,4 +79,34 @@ test("suscripciones: anual se prorratea", () => {
 test("variación", () => {
   assert.equal(variacion(106, 100), 6);
   assert.equal(variacion(50, 0), null);
+});
+
+test("alertas de vencimiento: vencidas y próximas 7 días", () => {
+  const hoy = "2026-11-15";
+  const provs = [
+    prov({ id: "a", dia_vencimiento: 10 }), // vencida hace 5
+    prov({ id: "b", dia_vencimiento: 15 }), // hoy
+    prov({ id: "c", dia_vencimiento: 22 }), // en 7 días
+    prov({ id: "d", dia_vencimiento: 23 }), // en 8 días: fuera
+    prov({ id: "e", dia_vencimiento: null }), // sin día
+  ];
+  const al = alertasVencimiento(calcularPendientes(provs, [], "2026-11", hoy));
+  assert.deepEqual(al.vencidas.map((p) => p.provider.id), ["a"]);
+  assert.deepEqual(al.proximas.map((p) => p.provider.id), ["b", "c"]);
+});
+
+test("pago rápido usa el monto estimado y marca pagado hoy", () => {
+  const p = prov({ id: "luz", dia_vencimiento: 31, monto_estimado: 42100 });
+  const b = cuentaPagadaRapida(p, "2026-11", "2026-11-15")!;
+  assert.equal(b.monto, 42100);
+  assert.equal(b.estado, "pagado");
+  assert.equal(b.fecha_pago, "2026-11-15");
+  assert.equal(b.periodo, "2026-11");
+  assert.equal(b.fecha_vencimiento, "2026-11-30");
+  assert.equal(b.moneda_original, "CLP");
+});
+
+test("pago rápido: sin monto estimado no se puede", () => {
+  assert.equal(cuentaPagadaRapida(prov({ monto_estimado: null }), "2026-11", "2026-11-15"), null);
+  assert.equal(cuentaPagadaRapida(prov({ monto_estimado: 0 }), "2026-11", "2026-11-15"), null);
 });
