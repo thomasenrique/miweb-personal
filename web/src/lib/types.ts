@@ -69,6 +69,38 @@ export type Contribution = {
 
 export type GoalFull = Goal & { contributions: Contribution[] };
 
+export type Card = {
+  id: string;
+  nombre: string;
+  ultimos4: string | null;
+  cupo: number | null;
+  dia_facturacion: number;
+  dia_pago: number;
+  activa: boolean;
+};
+
+export type TipoDeuda = "compra" | "credito";
+
+export type Debt = {
+  id: string;
+  tipo: TipoDeuda;
+  card_id: string | null;
+  descripcion: string;
+  institucion: string | null;
+  grupo: Grupo;
+  fecha: string;
+  monto_total: number;
+  n_cuotas: number;
+  valor_cuota: number;
+  /** YYYY-MM en que se paga la cuota 1. */
+  primer_mes_pago: string;
+  dia_pago: number | null;
+  saldada: boolean;
+  notas: string | null;
+};
+
+export type DebtFull = Debt & { card: Card | null };
+
 /** Proveedor con su categoría ya resuelta. */
 export type ProviderFull = Provider & { category: Category };
 /** Cuenta con proveedor y categoría resueltos. */

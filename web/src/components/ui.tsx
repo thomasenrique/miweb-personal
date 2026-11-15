@@ -36,13 +36,14 @@ export function Encabezado({ titulo, volver, accion }: { titulo: string; volver?
   );
 }
 
-/** Mini gráfico de barras: la última barra se destaca. */
-export function Barras({ datos }: { datos: { etiqueta: string; valor: number }[] }) {
+/** Mini gráfico de barras: se destaca la barra `destacar` (por defecto, la última). */
+export function Barras({ datos, destacar }: { datos: { etiqueta: string; valor: number }[]; destacar?: number }) {
   const max = Math.max(1, ...datos.map((d) => d.valor));
+  const marcada = destacar ?? datos.length - 1;
   return (
     <div className="h-bars" role="img" aria-label={datos.map((d) => `${d.etiqueta} ${formatCLP(d.valor)}`).join(", ")}>
       {datos.map((d, i) => (
-        <div key={d.etiqueta + i} className={i === datos.length - 1 ? "is-now" : undefined}>
+        <div key={d.etiqueta + i} className={i === marcada ? "is-now" : undefined}>
           <span style={{ height: `${Math.round((d.valor / max) * 80)}%` }} />
           <small>{d.etiqueta}</small>
         </div>

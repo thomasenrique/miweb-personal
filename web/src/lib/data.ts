@@ -2,7 +2,9 @@
 import "server-only";
 import { demo } from "./demo";
 import { crearSupabase, supabaseConfigurado } from "./supabase/server";
-import type { Bill, BillFull, Category, Contribution, Goal, GoalFull, Provider, ProviderFull } from "./types";
+import type {
+  Bill, BillFull, Card, Category, Contribution, Debt, DebtFull, Goal, GoalFull, Provider, ProviderFull,
+} from "./types";
 
 export const modoDemo = !supabaseConfigurado;
 
@@ -229,4 +231,114 @@ export async function deleteContribution(id: string) {
   }
   const sb = await crearSupabase();
   falla((await sb.from("contributions").delete().eq("id", id)).error);
+}
+
+// ——— Deudas: tarjetas, compras en cuotas y créditos ———
+
+export type CardInput = Omit<Card, "id">;
+export type DebtInput = Omit<Debt, "id">;
+
+export async function getCards(): Promise<Card[]> {
+  let list: Card[];
+  if (modoDemo) list = [...demo.cards];
+  else {
+    const sb = await crearSupabase();
+    const { data, error } = await sb.from("cards").select("*");
+    falla(error);
+    list = data as Card[];
+  }
+  return list.sort((a, b) => Number(b.activa) - Number(a.activa) || a.nombre.localeCompare(b.nombre));
+}
+
+export async function getCard(id: string): Promise<Card | null> {
+  return (await getCards()).find((c) => c.id === id) ?? null;
+}
+
+export async function getDebts(): Promise<DebtFull[]> {
+  if (modoDemo) {
+    return demo.debts.map((d) => ({ ...d, card: demo.cards.find((c) => c.id === d.card_id) ?? null }));
+  }
+  const sb = await crearSupabase();
+  const { data, error } = await sb.from("debts").select("*, card:cards(*)").order("fecha", { ascending: false });
+  falla(error);
+  return data as DebtFull[];
+}
+
+export async function getDebt(id: string): Promise<DebtFull | null> {
+  return (await getDebts()).find((d) => d.id === id) ?? null;
+}
+
+export async function saveCard(id: string | null, input: CardInput) {
+  if (modoDemo) {
+    if (id) {
+      const i = demo.cards.findIndex((c) => c.id === id);
+      if (i >= 0) demo.cards[i] = { ...input, id };
+    } else demo.cards.push({ ...input, id: crypto.randomUUID() });
+    return;
+  }
+  const sb = await crearSupabase();
+  falla((id ? await sb.from("cards").update(input).eq("id", id) : await sb.from("cards").insert(input)).error);
+}
+
+/** Elimina la tarjeta si no tiene compras; si tiene, la desactiva. */
+export async function deleteCard(id: string): Promise<"eliminada" | "desactivada"> {
+  if (modoDemo) {
+    if (demo.debts.some((d) => d.card_id === id)) {
+      const c = demo.cards.find((x) => x.id === id);
+      if (c) c.activa = false;
+      return "desactivada";
+    }
+    demo.cards = demo.cards.filter((c) => c.id !== id);
+    return "eliminada";
+  }
+  const sb = await crearSupabase();
+  const { count, error } = await sb.from("debts").select("id", { count: "exact", head: true }).eq("card_id", id);
+  falla(error);
+  if (count) {
+    falla((await sb.from("cards").update({ activa: false }).eq("id", id)).error);
+    return "desactivada";
+  }
+  falla((await sb.from("cards").delete().eq("id", id)).error);
+  return "eliminada";
+}
+
+/** Crea o actualiza una deuda. Devuelve su id. */
+export async function saveDebt(id: string | null, input: DebtInput): Promise<string> {
+  if (modoDemo) {
+    if (id) {
+      const i = demo.debts.findIndex((d) => d.id === id);
+      if (i >= 0) demo.debts[i] = { ...input, id };
+      return id;
+    }
+    const nuevo = crypto.randomUUID();
+    demo.debts.push({ ...input, id: nuevo });
+    return nuevo;
+  }
+  const sb = await crearSupabase();
+  if (id) {
+    falla((await sb.from("debts").update(input).eq("id", id)).error);
+    return id;
+  }
+  const { data, error } = await sb.from("debts").insert(input).select("id").single();
+  falla(error);
+  return (data as { id: string }).id;
+}
+
+export async function setDebtSaldada(id: string, saldada: boolean) {
+  if (modoDemo) {
+    const d = demo.debts.find((x) => x.id === id);
+    if (d) d.saldada = saldada;
+    return;
+  }
+  const sb = await crearSupabase();
+  falla((await sb.from("debts").update({ saldada }).eq("id", id)).error);
+}
+
+export async function deleteDebt(id: string) {
+  if (modoDemo) {
+    demo.debts = demo.debts.filter((d) => d.id !== id);
+    return;
+  }
+  const sb = await crearSupabase();
+  falla((await sb.from("debts").delete().eq("id", id)).error);
 }

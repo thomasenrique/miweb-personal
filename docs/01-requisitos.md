@@ -80,3 +80,22 @@ Criterios:
 
 ## Fuera del MVP
 Notificaciones push/correo, multiusuario, conexión directa a bancos, presupuesto general, inversiones.
+
+## D. Deudas (tarjetas y créditos)
+
+### D1. Tarjetas de crédito
+- Varias tarjetas: nombre, últimos 4 dígitos (nunca el número completo), cupo total, día de facturación y día de pago.
+- Cupo usado = capital pendiente de sus compras en cuotas; disponible = cupo − usado.
+
+### D2. Compras en cuotas
+- Tarjeta, descripción, fecha, grupo Hogar/Personal, monto total, n° de cuotas (1 o más) y **valor cuota que informa el banco**. Sin valor cuota = sin interés (total / n).
+- Interés total = valor cuota × n − monto total.
+- Primera cuota según facturación: compra hasta el día de facturación entra en ese estado de cuenta; si el día de pago es menor o igual al de facturación, se paga al mes siguiente. Se puede cambiar el mes a mano.
+
+### D3. Otros créditos
+- Créditos de consumo, préstamos, crédito automotriz: institución, monto, n° de cuotas, valor cuota, mes de la primera cuota y día de pago.
+
+### D4. Pagos y vistas
+- Las cuotas se dan por pagadas solas cuando pasa su fecha de pago. Una deuda se puede marcar "saldada" (prepago).
+- Resumen: deuda total restante, a pagar este mes, proyección de los próximos 6 meses, filtro Todo · Hogar · Personal.
+- Detalle de cada deuda con su calendario de cuotas.

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { GoalCard } from "@/components/GoalCard";
 import { EstadoPill, Monto } from "@/components/ui";
-import { getBills, getGoals, getProviders } from "@/lib/data";
+import { getBills, getDebts, getGoals, getProviders } from "@/lib/data";
+import { aPagarEnPeriodo, saldoRestante } from "@/lib/deudas";
 import {
   calcularPendientes, formatCLP, hoyChile, periodoDe, textoVencimiento, totalPorGrupo, tituloPeriodo,
 } from "@/lib/finanzas";
@@ -9,7 +10,12 @@ import {
 export default async function InicioPage() {
   const hoy = hoyChile();
   const mes = periodoDe(hoy);
-  const [bills, providers, goals] = await Promise.all([getBills([mes]), getProviders(), getGoals().catch(() => [])]);
+  const [bills, providers, goals, deudas] = await Promise.all([
+    getBills([mes]),
+    getProviders(),
+    getGoals().catch(() => []),
+    getDebts().catch(() => []),
+  ]);
   const metas = goals.filter((g) => g.estado === "activa").slice(0, 3);
   const t = totalPorGrupo(bills);
   const pendientes = calcularPendientes(providers, bills, mes, hoy);
@@ -67,6 +73,19 @@ export default async function InicioPage() {
           </section>
         )}
 
+        {deudas.length > 0 && (
+          <section className="h-card">
+            <div className="h-row">
+              <h3>Deudas</h3>
+              <Link className="h-btn h-btn--ghost" href="/deudas">Ver ›</Link>
+            </div>
+            <div className="h-metric__label">Cuotas a pagar este mes</div>
+            <div className="h-metric__value">{formatCLP(aPagarEnPeriodo(deudas, mes))}</div>
+            <div className="h-muted">
+              Deuda restante {formatCLP(deudas.reduce((s, d) => s + saldoRestante(d, hoy), 0))}
+            </div>
+          </section>
+        )}
       </div>
 
       <div className="h-row">

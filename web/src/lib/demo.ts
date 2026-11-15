@@ -1,7 +1,7 @@
 // Datos de ejemplo en memoria para usar la app sin Supabase (se pierden al reiniciar el servidor).
 import "server-only";
 import { addMeses, fechaVencimiento, hoyChile, periodoDe } from "./finanzas";
-import type { Bill, Category, Contribution, Goal, Provider } from "./types";
+import type { Bill, Card, Category, Contribution, Debt, Goal, Provider } from "./types";
 
 const cat = (id: string, nombre: string, icono: string, grupo: Category["grupo"], orden: number, es_suscripcion = false): Category =>
   ({ id, nombre, icono, grupo, orden, es_suscripcion });
@@ -87,15 +87,40 @@ function generarMetas(): { goals: Goal[]; contributions: Contribution[] } {
   return { goals, contributions };
 }
 
+function generarDeudas(): { cards: Card[]; debts: Debt[] } {
+  const actual = periodoDe(hoyChile());
+  const cards: Card[] = [
+    { id: "visa", nombre: "Visa BCI", ultimos4: "4821", cupo: 3_000_000, dia_facturacion: 20, dia_pago: 5, activa: true },
+    { id: "master", nombre: "Master Santander", ultimos4: "1093", cupo: 2_000_000, dia_facturacion: 25, dia_pago: 10, activa: true },
+  ];
+  const d = (o: Partial<Debt> & Pick<Debt, "id" | "descripcion" | "monto_total" | "n_cuotas" | "valor_cuota" | "primer_mes_pago">): Debt => ({
+    tipo: "compra", card_id: "visa", institucion: null, grupo: "hogar", fecha: `${addMeses(o.primer_mes_pago, -1)}-15`,
+    dia_pago: null, saldada: false, notas: null, ...o,
+  });
+  const debts: Debt[] = [
+    d({ id: "refri", descripcion: "Refrigerador", monto_total: 699_600, n_cuotas: 12, valor_cuota: 62_400, primer_mes_pago: addMeses(actual, -3) }),
+    d({ id: "notebook", descripcion: "Notebook", card_id: "master", grupo: "personal", monto_total: 540_000, n_cuotas: 6, valor_cuota: 90_000, primer_mes_pago: addMeses(actual, -1) }),
+    d({ id: "super", descripcion: "Supermercado", monto_total: 84_200, n_cuotas: 1, valor_cuota: 84_200, primer_mes_pago: addMeses(actual, 1) }),
+    d({
+      id: "consumo", tipo: "credito", card_id: null, descripcion: "Crédito de consumo", institucion: "BancoEstado",
+      grupo: "personal", monto_total: 3_000_000, n_cuotas: 36, valor_cuota: 104_000, primer_mes_pago: addMeses(actual, -13), dia_pago: 15,
+    }),
+  ];
+  return { cards, debts };
+}
+
 type Store = {
   categories: Category[];
   providers: Provider[];
   bills: Bill[];
   goals: Goal[];
   contributions: Contribution[];
+  cards: Card[];
+  debts: Debt[];
 };
 
 // Un solo store por proceso (sobrevive a recargas en desarrollo).
 const g = globalThis as unknown as { __demoStore?: Store };
 if (g.__demoStore && !g.__demoStore.goals) Object.assign(g.__demoStore, generarMetas());
-export const demo: Store = (g.__demoStore ??= { categories, providers, bills: generarCuentas(), ...generarMetas() });
+if (g.__demoStore && !g.__demoStore.cards) Object.assign(g.__demoStore, generarDeudas());
+export const demo: Store = (g.__demoStore ??= { categories, providers, bills: generarCuentas(), ...generarMetas(), ...generarDeudas() });

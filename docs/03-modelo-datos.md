@@ -106,3 +106,29 @@ Proveedores reales, montos y días de vencimiento se cargan en la primera pantal
 - **Cuota** (amortización francesa):
   `i = tasa_anual / 100 / 12`, `P = precio_total − pie`, `cuota = P · i / (1 − (1 + i)^−n)`; si `i = 0` → `P / n`
 - **Total crédito** = cuota · n; **intereses** = total − P
+
+## cards (tarjetas)
+| Campo | Tipo | Nota |
+|---|---|---|
+| nombre | text | "Visa BCI" |
+| ultimos4 | char(4) | opcional |
+| cupo | integer | CLP |
+| dia_facturacion | smallint | 1–31 |
+| dia_pago | smallint | 1–31 |
+| activa | boolean | |
+
+## debts (compras en cuotas y créditos)
+| Campo | Tipo | Nota |
+|---|---|---|
+| tipo | enum | `compra` · `credito` |
+| card_id | uuid → cards | obligatorio si es compra |
+| descripcion | text | "Refrigerador" |
+| institucion | text | solo créditos |
+| grupo | enum | `hogar` · `personal` |
+| fecha | date | compra u otorgamiento |
+| monto_total | integer | |
+| n_cuotas | smallint | 1–360 |
+| valor_cuota | integer | lo que informa el banco |
+| primer_mes_pago | char(7) | YYYY-MM de la cuota 1 |
+| dia_pago | smallint | créditos; las compras usan el de la tarjeta |
+| saldada | boolean | prepago total |

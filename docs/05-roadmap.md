@@ -27,6 +27,9 @@ Salida: revisión de mockups y respuestas a preguntas abiertas.
 - Simulador de crédito guardable en la meta.
 - Cargar meta "Auto nuevo" y "Nintendo Switch".
 
+## F3.5 · Deudas ✅ (requiere ejecutar web/supabase/migrations/0003_deudas.sql)
+- Tarjetas con cupo, compras en cuotas, otros créditos, proyección y calendario de cuotas.
+
 ## F4 · Pulido
 - PWA instalable (icono en el celular).
 - Gráfico por categoría y comparación entre meses.
