@@ -4,6 +4,15 @@ import { addMeses, calcularPendientes, cobraEnPeriodo } from "./finanzas.ts";
 import { proyectar } from "./metas.ts";
 import type { BillFull, DebtFull, GoalFull, ProviderFull } from "./types.ts";
 
+export type Datos = {
+  bills: BillFull[];
+  providers: ProviderFull[];
+  debts: DebtFull[];
+  goals: GoalFull[];
+  /** Monto esperado de los proveedores de monto variable (ver estimadosVariables). */
+  estimados?: Map<string, number>;
+};
+
 export type Presupuesto = {
   sueldo: number;
   /** Cuentas registradas del mes (pagadas, pendientes o por revisar) + estimado de las que faltan. */
@@ -18,12 +27,12 @@ export type Presupuesto = {
 
 export function calcularPresupuesto(
   sueldo: number,
-  datos: { bills: BillFull[]; providers: ProviderFull[]; debts: DebtFull[]; goals: GoalFull[] },
+  datos: Datos,
   periodo: string,
   hoy: string,
 ): Presupuesto {
   const registradas = datos.bills.filter((b) => b.periodo === periodo).reduce((s, b) => s + b.monto, 0);
-  const faltan = calcularPendientes(datos.providers, datos.bills, periodo, hoy).reduce((s, p) => s + p.montoEstimado, 0);
+  const faltan = calcularPendientes(datos.providers, datos.bills, periodo, hoy, datos.estimados).reduce((s, p) => s + p.montoEstimado, 0);
   const cuentas = registradas + faltan;
   const cuotas = aPagarEnPeriodo(datos.debts, periodo);
   const metas = datos.goals
@@ -56,7 +65,7 @@ export type MesProyectado = {
  */
 export function proyectarLibre(
   sueldo: number,
-  datos: { bills: BillFull[]; providers: ProviderFull[]; debts: DebtFull[]; goals: GoalFull[] },
+  datos: Datos,
   periodo: string,
   hoy: string,
   meses = 12,
@@ -79,7 +88,7 @@ export function proyectarLibre(
     for (const d of vigentes) {
       if (addMeses(d.primer_mes_pago, d.n_cuotas - 1) === anterior) notas.push(`termina ${d.descripcion}`);
     }
-    const cuentas = datos.providers.filter((pr) => cobraEnPeriodo(pr, p)).reduce((s, pr) => s + (pr.monto_estimado ?? 0), 0);
+    const cuentas = datos.providers.filter((pr) => cobraEnPeriodo(pr, p)).reduce((s, pr) => s + (datos.estimados?.get(pr.id) ?? pr.monto_estimado ?? 0), 0);
     const cuotas = aPagarEnPeriodo(datos.debts, p);
     let aporte = 0;
     for (const m of metas) {

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 /** Input de monto que agrega puntos de miles mientras escribes (42100 → 42.100). */
 export function MoneyInput({
-  name, id, defaultValue, placeholder, decimales = false, required,
+  name, id, defaultValue, placeholder, decimales = false, required, etiqueta,
 }: {
   name: string;
   id: string;
@@ -12,6 +12,8 @@ export function MoneyInput({
   placeholder?: string;
   decimales?: boolean;
   required?: boolean;
+  /** aria-label cuando no hay <label> visible. */
+  etiqueta?: string;
 }) {
   const formatear = (s: string) => {
     const [ent, dec] = s.replace(/[^\d,]/g, "").split(",");
@@ -30,6 +32,7 @@ export function MoneyInput({
       autoComplete="off"
       placeholder={placeholder}
       required={required}
+      aria-label={etiqueta}
       value={valor}
       onChange={(e) => setValor(formatear(e.target.value))}
     />

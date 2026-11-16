@@ -30,6 +30,7 @@ function Fila({ p }: { p: ProviderFull }) {
           <span className="h-muted">
             {p.category.nombre}
             {p.dia_vencimiento ? ` · día ${p.dia_vencimiento}` : ""}
+            {p.monto_variable ? " · variable" : ""}
             {p.frecuencia === "anual" ? " · anual" : ""}
             {p.moneda === "USD" ? " · USD" : ""}
             {p.activo ? "" : " · inactivo"}

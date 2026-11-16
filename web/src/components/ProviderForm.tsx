@@ -92,6 +92,15 @@ export function ProviderForm({ categories, cards, provider }: { categories: Cate
         </div>
 
         <label className="h-row" style={{ justifyContent: "flex-start" }}>
+          <input type="checkbox" name="monto_variable" defaultChecked={provider?.monto_variable ?? false} style={{ width: 20, height: 20, accentColor: "var(--h-accent)" }} />
+          <span>
+            Monto variable
+            <br />
+            <span className="h-muted">Cambia cada mes (luz, agua, gas): Inicio te pide el monto real hasta que lo ingreses.</span>
+          </span>
+        </label>
+
+        <label className="h-row" style={{ justifyContent: "flex-start" }}>
           <input type="checkbox" name="activo" defaultChecked={provider?.activo ?? true} style={{ width: 20, height: 20, accentColor: "var(--h-accent)" }} />
           Activo (aparece en pendientes)
         </label>

@@ -1,32 +1,39 @@
 import Link from "next/link";
 import { GoalCard } from "@/components/GoalCard";
-import { AlertaVencimientos, FilaPendiente } from "@/components/Pendientes";
+import { AlertaVencimientos, FilaPendiente, IngresarMontos } from "@/components/Pendientes";
 import { EstadoPill, Monto } from "@/components/ui";
 import { getBills, getDebts, getGoals, getProviders, getSueldo, registrarCargosAutomaticos } from "@/lib/data";
 import { aPagarEnPeriodo, saldoRestante } from "@/lib/deudas";
 import {
-  alertasVencimiento, calcularPendientes, formatCLP, hoyChile, mesCorto, periodoDe, totalPorGrupo, tituloPeriodo,
+  addMeses, alertasVencimiento, calcularPendientes, cuentasPorPagar, estimadosVariables, formatCLP, hoyChile, mesCorto,
+  periodoDe, totalPorGrupo, tituloPeriodo, ultimosPeriodos,
 } from "@/lib/finanzas";
 import { calcularPresupuesto, proyectarLibre } from "@/lib/presupuesto";
 
 export default async function InicioPage({ searchParams }: PageProps<"/">) {
-  const { aviso } = await searchParams;
+  const { aviso, vista, error } = await searchParams;
+  const verLibre = vista === "libre";
   const hoy = hoyChile();
   const mes = periodoDe(hoy);
   await registrarCargosAutomaticos(mes, hoy).catch(() => {});
-  const [bills, providers, goals, deudas, sueldo] = await Promise.all([
+  const [bills, historial, providers, goals, deudas, sueldo] = await Promise.all([
     getBills([mes]),
+    getBills(ultimosPeriodos(addMeses(mes, -1), 3)),
     getProviders(),
     getGoals().catch(() => []),
     getDebts().catch(() => []),
     getSueldo().catch(() => null),
   ]);
-  const datos = { bills, providers, debts: deudas, goals };
+  const estimados = estimadosVariables(providers, historial, mes);
+  const datos = { bills, providers, debts: deudas, goals, estimados };
   const pres = sueldo != null ? calcularPresupuesto(sueldo, datos, mes, hoy) : null;
   const futuro = sueldo != null ? proyectarLibre(sueldo, datos, mes, hoy, 12) : [];
   const metas = goals.filter((g) => g.estado === "activa").slice(0, 3);
   const t = totalPorGrupo(bills);
-  const pendientes = calcularPendientes(providers, bills, mes, hoy);
+  const sinCuenta = calcularPendientes(providers, bills, mes, hoy, estimados);
+  const faltaMonto = sinCuenta.filter((p) => p.provider.monto_variable);
+  const pendientes = [...cuentasPorPagar(bills, mes, hoy), ...sinCuenta.filter((p) => !p.provider.monto_variable)]
+    .sort((a, b) => (a.vencimiento ?? "9999").localeCompare(b.vencimiento ?? "9999"));
   const revisar = bills.filter((b) => b.estado === "revisar");
 
   return (
@@ -35,8 +42,17 @@ export default async function InicioPage({ searchParams }: PageProps<"/">) {
 
       {aviso === "pagada" && <p className="h-card h-card--soft" role="status">Cuenta registrada como pagada ✓</p>}
       {aviso === "aporte" && <p className="h-card h-card--soft" role="status">Aporte registrado ✓</p>}
-      <AlertaVencimientos alertas={alertasVencimiento(pendientes)} />
+      {aviso === "monto" && <p className="h-card h-card--soft" role="status">Monto guardado: quedó en Por pagar ✓</p>}
+      {typeof error === "string" && <p className="h-alert" role="alert">{error}</p>}
+      <AlertaVencimientos alertas={alertasVencimiento([...pendientes, ...faltaMonto])} />
 
+      <nav className="h-seg" aria-label="Vista de inicio">
+        <Link href="/" aria-current={verLibre ? undefined : "page"}>Este mes</Link>
+        <Link href="/?vista=libre" aria-current={verLibre ? "page" : undefined}>Libre disponible</Link>
+      </nav>
+
+      {verLibre ? (
+      <>
       {pres ? (
         <section className="h-card">
           <div className="h-metric__label">Libre disponible en {tituloPeriodo(mes, mes).toLowerCase()}</div>
@@ -90,6 +106,10 @@ export default async function InicioPage({ searchParams }: PageProps<"/">) {
           </div>
         </section>
       )}
+      </>
+      ) : (
+      <>
+      <IngresarMontos faltan={faltaMonto} mes={mes} volver="/" />
 
       <section className="h-card">
         <div className="h-metric__label">Pagado en {tituloPeriodo(mes, mes).toLowerCase()}</div>
@@ -105,7 +125,7 @@ export default async function InicioPage({ searchParams }: PageProps<"/">) {
         <section className="h-card">
           <h3>Por pagar</h3>
           {pendientes.length === 0 ? (
-            <p className="h-muted">Todo pagado este mes.</p>
+            <p className="h-muted">{faltaMonto.length ? "Nada más por pagar mientras no ingreses los montos." : "Todo pagado este mes."}</p>
           ) : (
             <ul className="h-list">
               {pendientes.slice(0, 4).map((p) => (
@@ -160,6 +180,8 @@ export default async function InicioPage({ searchParams }: PageProps<"/">) {
         <div className="h-grid">
           {metas.map((g) => <GoalCard key={g.id} goal={g} hoy={hoy} compacta volver="/" />)}
         </div>
+      )}
+      </>
       )}
     </>
   );

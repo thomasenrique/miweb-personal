@@ -26,6 +26,8 @@ export type Provider = {
   activo: boolean;
   /** Tarjeta con que se cobra (solo suscripciones). null = pago manual. */
   card_id: string | null;
+  /** El monto cambia cada mes (luz, agua, gas): Inicio lo pide hasta que se ingresa. */
+  monto_variable: boolean;
 };
 
 export type Bill = {

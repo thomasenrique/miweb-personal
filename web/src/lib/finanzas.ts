@@ -83,6 +83,8 @@ export function cobraEnPeriodo(p: ProviderFull, periodo: string): boolean {
 
 export type Pendiente = {
   provider: ProviderFull;
+  /** Cuenta ya registrada como pendiente (monto real ingresado, falta pagarla). */
+  bill?: BillFull;
   vencimiento: string | null;
   /** Días que faltan (negativo = vencido). null si no tiene día de vencimiento. */
   dias: number | null;
@@ -98,6 +100,7 @@ export function calcularPendientes(
   bills: BillFull[],
   periodo: string,
   hoy: string,
+  estimados?: Map<string, number>,
 ): Pendiente[] {
   const conCuenta = new Set(bills.filter((b) => b.periodo === periodo).map((b) => b.provider_id));
   const out: Pendiente[] = [];
@@ -108,10 +111,45 @@ export function calcularPendientes(
       provider: p,
       vencimiento,
       dias: vencimiento ? diasEntre(hoy, vencimiento) : null,
-      montoEstimado: p.monto_estimado ?? 0,
+      montoEstimado: estimados?.get(p.id) ?? p.monto_estimado ?? 0,
     });
   }
   return out.sort((a, b) => (a.vencimiento ?? "9999").localeCompare(b.vencimiento ?? "9999"));
+}
+
+/** Cuentas registradas del periodo con estado "pendiente": ya tienen monto real, falta pagarlas. */
+export function cuentasPorPagar(bills: BillFull[], periodo: string, hoy: string): Pendiente[] {
+  return bills
+    .filter((b) => b.periodo === periodo && b.estado === "pendiente")
+    .map((b) => ({
+      provider: b.provider,
+      bill: b,
+      vencimiento: b.fecha_vencimiento,
+      dias: b.fecha_vencimiento ? diasEntre(hoy, b.fecha_vencimiento) : null,
+      montoEstimado: b.monto,
+    }))
+    .sort((a, b) => (a.vencimiento ?? "9999").localeCompare(b.vencimiento ?? "9999"));
+}
+
+/**
+ * Monto esperado de los proveedores de monto variable: promedio de lo registrado en los
+ * `historial` meses anteriores a `periodo` (por defecto 3). Sin historial no aparece en el mapa
+ * (se usa el monto estimado del proveedor).
+ */
+export function estimadosVariables(
+  providers: ProviderFull[],
+  bills: BillFull[],
+  periodo: string,
+  historial = 3,
+): Map<string, number> {
+  const previos = new Set(ultimosPeriodos(addMeses(periodo, -1), historial));
+  const out = new Map<string, number>();
+  for (const p of providers) {
+    if (!p.monto_variable) continue;
+    const montos = bills.filter((b) => b.provider_id === p.id && previos.has(b.periodo)).map((b) => b.monto);
+    if (montos.length) out.set(p.id, Math.round(montos.reduce((s, m) => s + m, 0) / montos.length));
+  }
+  return out;
 }
 
 export function textoVencimiento(p: Pendiente): string {
@@ -140,7 +178,8 @@ export function alertasVencimiento(pendientes: Pendiente[], ventanaDias = 7): Al
  * El monto estimado siempre está en CLP, así que la cuenta se guarda en CLP.
  */
 export function cuentaPagadaRapida(p: ProviderFull, periodo: string, hoy: string): Omit<Bill, "id"> | null {
-  if (!p.monto_estimado || p.monto_estimado <= 0) return null;
+  // Si el monto cambia cada mes, el estimado no sirve para registrar el pago.
+  if (p.monto_variable || !p.monto_estimado || p.monto_estimado <= 0) return null;
   return {
     provider_id: p.id,
     monto: Math.round(p.monto_estimado),

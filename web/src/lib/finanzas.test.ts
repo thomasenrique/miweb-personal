@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   addMeses, alertasVencimiento, cuentaPagadaRapida, calcularPendientes, costoMensual, fechaVencimiento, formatCLP, hoyChile,
   parseMonto, resumenSuscripciones, textoVencimiento, totalPorCategoria, totalPorGrupo,
-  ultimosPeriodos, variacion,
+  ultimosPeriodos, variacion, estimadosVariables, cuentasPorPagar,
 } from "./finanzas.ts";
 import { agruparPorTarjeta, cargosAutomaticos, proximoCobro } from "./finanzas.ts";
 import type { BillFull, Card, Category, ProviderFull } from "./types.ts";
@@ -15,7 +15,7 @@ function prov(o: Partial<ProviderFull>): ProviderFull {
   return {
     id: "p", nombre: "X", category_id: luz.id, category: luz, numero_cliente: null,
     dia_vencimiento: null, frecuencia: "mensual", mes_cobro: null, moneda: "CLP",
-    monto_estimado: null, activo: true, card_id: null, card: null, ...o,
+    monto_estimado: null, activo: true, card_id: null, card: null, monto_variable: false, ...o,
   };
 }
 function bill(p: ProviderFull, o: Partial<BillFull>): BillFull {
@@ -141,4 +141,36 @@ test("agrupa suscripciones por tarjeta con total y próximo cobro", () => {
   assert.equal(g[0].proximo?.fecha, "2026-11-20");
   assert.equal(g[1].proximo?.fecha, "2026-12-05");
   assert.equal(proximoCobro(sub("anual", 3, rut, { frecuencia: "anual", mes_cobro: 2 }), "2026-11-15"), "2027-02-03");
+});
+
+test("monto variable: sin pago rápido, estimado = promedio de los 3 meses anteriores", () => {
+  const enel = prov({ id: "enel", monto_variable: true, monto_estimado: 40000, dia_vencimiento: 18 });
+  const fijo = prov({ id: "casa", monto_estimado: 470000 });
+  assert.equal(cuentaPagadaRapida(enel, "2026-11", "2026-11-15"), null);
+  const hist = [
+    bill(enel, { periodo: "2026-07", monto: 99000 }), // fuera de la ventana
+    bill(enel, { periodo: "2026-08", monto: 30000 }),
+    bill(enel, { periodo: "2026-10", monto: 45000 }),
+    bill(fijo, { periodo: "2026-10", monto: 470000 }),
+  ];
+  const est = estimadosVariables([enel, fijo], hist, "2026-11");
+  assert.equal(est.get("enel"), 37500);
+  assert.equal(est.has("casa"), false);
+  const pend = calcularPendientes([enel, fijo], [], "2026-11", "2026-11-15", est);
+  assert.equal(pend.find((p) => p.provider.id === "enel")!.montoEstimado, 37500);
+  assert.equal(pend.find((p) => p.provider.id === "casa")!.montoEstimado, 470000);
+});
+
+test("cuentas por pagar: solo las registradas como pendientes del periodo", () => {
+  const enel = prov({ id: "enel", monto_variable: true });
+  const bills = [
+    bill(enel, { periodo: "2026-11", estado: "pendiente", monto: 41000, fecha_vencimiento: "2026-11-18" }),
+    bill(enel, { periodo: "2026-10", estado: "pendiente", monto: 1 }),
+    bill(enel, { periodo: "2026-11", estado: "pagado", monto: 2 }),
+  ];
+  const r = cuentasPorPagar(bills, "2026-11", "2026-11-15");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].montoEstimado, 41000);
+  assert.equal(r[0].dias, 3);
+  assert.ok(r[0].bill);
 });

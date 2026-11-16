@@ -4,7 +4,7 @@ import { Barras, EstadoPill, Monto } from "@/components/ui";
 import { AlertaVencimientos, FilaPendiente } from "@/components/Pendientes";
 import { getBills, getProviders, registrarCargosAutomaticos } from "@/lib/data";
 import {
-  addMeses, alertasVencimiento, calcularPendientes, esPeriodo, fechaCorta, filtrarGrupo, formatCLP, hoyChile,
+  addMeses, alertasVencimiento, calcularPendientes, esPeriodo, estimadosVariables, fechaCorta, filtrarGrupo, formatCLP, hoyChile,
   mesCorto, periodoDe, resumenSuscripciones, totalPorCategoria,
   totalPorGrupo, totalPorPeriodo, tituloPeriodo, ultimosPeriodos, variacion,
 } from "@/lib/finanzas";
@@ -36,7 +36,7 @@ export default async function CuentasPage({ searchParams }: PageProps<"/cuentas"
   const total = totales[5];
   const cambio = variacion(total, totales[4]);
   const porGrupo = totalPorGrupo(todasCuentas.filter((b) => b.periodo === mes));
-  const pendientes = mes <= actual ? calcularPendientes(filtrarGrupo(todosProv, grupo), cuentas, mes, hoy) : [];
+  const pendientes = mes <= actual ? calcularPendientes(filtrarGrupo(todosProv, grupo), cuentas, mes, hoy, estimadosVariables(todosProv, todasCuentas, mes)) : [];
   const faltan = pendientes.reduce((s, p) => s + p.montoEstimado, 0);
   const subs = resumenSuscripciones(todosProv);
   const subsPagadas = new Map(todasCuentas.filter((b) => b.periodo === mes).map((b) => [b.provider_id, b]));

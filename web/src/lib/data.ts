@@ -48,7 +48,8 @@ export async function getProviders(): Promise<ProviderFull[]> {
     const sb = await crearSupabase();
     const { data, error } = await sb.from("providers").select(SELECT_PROVIDER);
     falla(error);
-    list = data as ProviderFull[];
+    // Antes de correr 0006_monto_variable.sql la columna no existe.
+    list = (data as ProviderFull[]).map((p) => ({ ...p, monto_variable: p.monto_variable ?? false }));
   }
   return list.sort(
     (a, b) => a.category.orden - b.category.orden || a.nombre.localeCompare(b.nombre),
@@ -118,6 +119,17 @@ export async function updateBill(id: string, input: BillInput) {
   falla((await sb.from("bills").update(input).eq("id", id)).error);
 }
 
+/** Marca como pagada una cuenta ya registrada (pendiente o por revisar). */
+export async function pagarBill(id: string, fecha_pago: string) {
+  if (modoDemo) {
+    const b = demo.bills.find((x) => x.id === id);
+    if (b) Object.assign(b, { estado: "pagado", fecha_pago });
+    return;
+  }
+  const sb = await crearSupabase();
+  falla((await sb.from("bills").update({ estado: "pagado", fecha_pago }).eq("id", id)).error);
+}
+
 export async function deleteBill(id: string) {
   if (modoDemo) {
     demo.bills = demo.bills.filter((b) => b.id !== id);
@@ -127,10 +139,24 @@ export async function deleteBill(id: string) {
   falla((await sb.from("bills").delete().eq("id", id)).error);
 }
 
+/** Si aún no se corre 0006_monto_variable.sql, guarda sin esa columna en vez de fallar. */
+async function sinColumnaNueva<T extends { error: { message: string } | null }>(
+  input: ProviderInput,
+  op: (fila: Partial<ProviderInput>) => PromiseLike<T>,
+) {
+  const r = await op(input);
+  if (r.error && /monto_variable/.test(r.error.message)) {
+    const resto: Partial<ProviderInput> = { ...input };
+    delete resto.monto_variable;
+    return falla((await op(resto)).error);
+  }
+  falla(r.error);
+}
+
 export async function createProvider(input: ProviderInput) {
   if (modoDemo) return void demo.providers.push({ ...input, id: crypto.randomUUID() });
   const sb = await crearSupabase();
-  falla((await sb.from("providers").insert(input)).error);
+  await sinColumnaNueva(input, (fila) => sb.from("providers").insert(fila));
 }
 
 export async function updateProvider(id: string, input: ProviderInput) {
@@ -140,7 +166,7 @@ export async function updateProvider(id: string, input: ProviderInput) {
     return;
   }
   const sb = await crearSupabase();
-  falla((await sb.from("providers").update(input).eq("id", id)).error);
+  await sinColumnaNueva(input, (fila) => sb.from("providers").update(fila).eq("id", id));
 }
 
 /** Elimina el proveedor si no tiene cuentas; si tiene, lo desactiva. Devuelve qué hizo. */

@@ -3,11 +3,11 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
-  createBill, createProvider, saveSueldo, deleteBill, deleteProvider, getCard, getCategories, getProvider, modoDemo,
+  createBill, createProvider, pagarBill, saveSueldo, deleteBill, deleteProvider, getCard, getCategories, getProvider, modoDemo,
   updateBill, updateProvider, type BillInput, type ProviderInput,
 } from "@/lib/data";
 import { dolarDelDia } from "@/lib/dolar";
-import { cuentaPagadaRapida, esPeriodo, hoyChile, parseMonto, periodoDe } from "@/lib/finanzas";
+import { cuentaPagadaRapida, esPeriodo, fechaVencimiento, hoyChile, parseMonto, periodoDe } from "@/lib/finanzas";
 import { crearSupabase } from "@/lib/supabase/server";
 import type { EstadoCuenta, Frecuencia, Moneda } from "@/lib/types";
 
@@ -95,6 +95,17 @@ export async function marcarPagada(form: FormData) {
   const volver = destinoSeguro(texto(form, "volver"), "/cuentas");
   if (!esPeriodo(periodo)) volverConError(volver, "Mes no válido.");
 
+  // Cuenta ya registrada con su monto real: solo se marca pagada.
+  const bill_id = texto(form, "bill_id");
+  if (bill_id) {
+    try {
+      await pagarBill(bill_id, hoyChile());
+    } catch (e) {
+      volverConError(volver, `No se pudo registrar el pago: ${(e as Error).message}`);
+    }
+    redirect(`${volver}${volver.includes("?") ? "&" : "?"}aviso=pagada`);
+  }
+
   const provider = await getProvider(provider_id);
   if (!provider) volverConError(volver, "No encontré el proveedor.");
   const input = cuentaPagadaRapida(provider, periodo, hoyChile());
@@ -108,6 +119,36 @@ export async function marcarPagada(form: FormData) {
     volverConError(volver, `No se pudo registrar el pago: ${(e as Error).message}`);
   }
   redirect(`${volver}${volver.includes("?") ? "&" : "?"}aviso=pagada`);
+}
+
+/** Registra el monto real de una cuenta de monto variable: queda pendiente de pago. */
+export async function ingresarMonto(form: FormData) {
+  const provider_id = texto(form, "provider_id");
+  const periodo = texto(form, "periodo");
+  const volver = destinoSeguro(texto(form, "volver"), "/");
+  if (!esPeriodo(periodo)) volverConError(volver, "Mes no válido.");
+  const provider = await getProvider(provider_id);
+  if (!provider) volverConError(volver, "No encontré el proveedor.");
+  const monto = parseMonto(texto(form, "monto"));
+  if (!(monto > 0)) volverConError(volver, `Escribe el monto de ${provider.nombre}, por ejemplo 42.100.`);
+  try {
+    await createBill({
+      provider_id,
+      monto: Math.round(monto),
+      moneda_original: "CLP",
+      monto_original: null,
+      tipo_cambio: null,
+      fecha_pago: null,
+      periodo,
+      fecha_vencimiento: provider.dia_vencimiento ? fechaVencimiento(periodo, provider.dia_vencimiento) : null,
+      estado: "pendiente",
+      fuente: "manual",
+      notas: null,
+    });
+  } catch (e) {
+    volverConError(volver, `No se pudo guardar: ${(e as Error).message}`);
+  }
+  redirect(`${volver}${volver.includes("?") ? "&" : "?"}aviso=monto`);
 }
 
 export async function eliminarCuenta(form: FormData) {
@@ -166,6 +207,7 @@ export async function guardarProveedor(form: FormData) {
     moneda: (texto(form, "moneda") || "CLP") as Moneda,
     monto_estimado: monto_estimado === null ? null : Math.round(monto_estimado),
     activo: form.get("activo") === "on",
+    monto_variable: form.get("monto_variable") === "on",
   };
 
   try {

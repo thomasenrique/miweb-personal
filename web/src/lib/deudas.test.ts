@@ -64,7 +64,7 @@ test("el pago de la tarjeta suma las suscripciones del ciclo", () => {
   const cat = { id: "s", nombre: "Suscripciones", icono: "🔁", grupo: "personal" as const, es_suscripcion: true, orden: 1 };
   const sub = (id: string, dia: number): ProviderFull => ({
     id, nombre: id, category_id: "s", category: cat, numero_cliente: null, dia_vencimiento: dia, frecuencia: "mensual",
-    mes_cobro: null, moneda: "CLP", monto_estimado: 5_000, activo: true, card_id: visa.id, card: visa,
+    mes_cobro: null, moneda: "CLP", monto_estimado: 5_000, activo: true, card_id: visa.id, card: visa, monto_variable: false,
   });
   // Pago del 5 dic: estado que cierra el 20 nov → cobros del 21 oct al 20 nov.
   const r = resumenTarjeta(visa, [compra({})], "2026-11-15", [sub("a", 14), sub("b", 25)]);

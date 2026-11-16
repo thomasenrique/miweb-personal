@@ -19,13 +19,13 @@ const categories: Category[] = [
 
 const p = (id: string, nombre: string, category_id: string, dia: number, monto: number, extra: Partial<Provider> = {}): Provider => ({
   id, nombre, category_id, numero_cliente: null, dia_vencimiento: dia, frecuencia: "mensual",
-  mes_cobro: null, moneda: "CLP", monto_estimado: monto, activo: true, card_id: null, ...extra,
+  mes_cobro: null, moneda: "CLP", monto_estimado: monto, activo: true, card_id: null, monto_variable: false, ...extra,
 });
 
 const providers: Provider[] = [
-  p("enel", "Enel", "luz", 5, 42000),
-  p("aguas", "Aguas Andinas", "agua", 18, 15800),
-  p("metrogas", "Metrogas", "gas", 22, 22000),
+  p("enel", "Enel", "luz", 5, 42000, { monto_variable: true }),
+  p("aguas", "Aguas Andinas", "agua", 18, 15800, { monto_variable: true }),
+  p("metrogas", "Metrogas", "gas", 22, 22000, { monto_variable: true }),
   p("movistar", "Movistar Hogar", "internet", 8, 24990),
   p("entel", "Entel", "internet", 15, 28230),
   p("edificio", "Edificio", "comunes", 10, 89000),
@@ -126,5 +126,6 @@ type Store = {
 const g = globalThis as unknown as { __demoStore?: Store };
 if (g.__demoStore && !g.__demoStore.goals) Object.assign(g.__demoStore, generarMetas());
 if (g.__demoStore && !g.__demoStore.cards) Object.assign(g.__demoStore, generarDeudas());
+if (g.__demoStore) for (const pr of g.__demoStore.providers) pr.monto_variable ??= ["luz", "agua", "gas"].includes(pr.category_id);
 if (g.__demoStore && g.__demoStore.sueldo === undefined) g.__demoStore.sueldo = 1_650_000;
 export const demo: Store = (g.__demoStore ??= { categories, providers, bills: generarCuentas(), ...generarMetas(), ...generarDeudas(), sueldo: 1_650_000 });
