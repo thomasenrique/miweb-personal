@@ -94,76 +94,34 @@
   background: var(--h-text); color: var(--h-bg); padding: 10px 18px; font-weight: 700; white-space: nowrap; animation: hb-in .25s var(--h-ease); }
 @keyframes hb-in { from { opacity: 0; transform: translate(-50%, 16px); } }
 .hb-fx { position: fixed; pointer-events: none; z-index: 70; }
-.hb-skin { display: flex; align-items: center; gap: 8px; }
-.hb-skin .h-seg { width: auto; }
 
-/* ——— Estilo BITÁCORA (por defecto) ——— */
-[data-skin="bitacora"] .hb-planner { border-radius: 6px; padding: 18px; border-top: 4px solid var(--h-text);
-  background-image: linear-gradient(var(--h-surface-2) 1px, transparent 1px), linear-gradient(90deg, var(--h-surface-2) 1px, transparent 1px);
-  background-size: 24px 24px; background-position: -1px -1px; }
-[data-skin="bitacora"] .hb-month h2 { font-family: var(--hb-cond); font-weight: 800; font-size: 48px; text-transform: uppercase; letter-spacing: .02em; }
-[data-skin="bitacora"] .hb-month h2 small { font-size: 26px; font-weight: 600; color: var(--h-text-muted); margin-left: 8px; }
-[data-skin="bitacora"] .hb-tag { white-space: nowrap; font-family: var(--hb-cond); font-weight: 700; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; background: var(--h-text); color: var(--h-bg); padding: 2px 8px; border-radius: 3px; }
-[data-skin="bitacora"] .hb-arrow { border-radius: 4px; }
-[data-skin="bitacora"] .hb-cheer { font-family: var(--hb-cond); font-weight: 600; font-size: 20px; letter-spacing: .02em; text-transform: uppercase; }
-[data-skin="bitacora"] .hb-cheer b { color: var(--h-accent); }
-[data-skin="bitacora"] .hb-stat { border-radius: 4px; border-left: 3px solid var(--h-text); }
-[data-skin="bitacora"] .hb-stat b { font-family: var(--hb-cond); font-weight: 800; font-size: 26px; }
-[data-skin="bitacora"] .hb-stat span:last-child { text-transform: uppercase; letter-spacing: .06em; font-size: 12px; font-weight: 700; }
-[data-skin="bitacora"] .hb-day { border-radius: 4px; }
-[data-skin="bitacora"] .hb-day .hb-n { font-family: var(--hb-cond); font-size: 18px; font-weight: 700; }
-[data-skin="bitacora"] .hb-day.is-today .hb-n::after { content: " HOY"; font-size: 12px; letter-spacing: .1em; }
-[data-skin="bitacora"] .hb-day.is-star { box-shadow: inset 0 -4px 0 var(--h-warn); }
-[data-skin="bitacora"] .hb-badge { top: 5px; right: 5px; width: 22px; height: 22px; border-radius: 4px; background: var(--h-warn); color: #fff; font-size: 13px; }
-[data-skin="bitacora"] .hb-stk { border-radius: 6px; background: color-mix(in srgb, var(--c) 18%, var(--h-surface)); border: 1.5px solid color-mix(in srgb, var(--c) 70%, transparent); }
-[data-skin="bitacora"] .hb-stk.pop { animation: hb-slam .35s var(--h-ease); }
-@keyframes hb-slam { 0% { transform: scale(1.6); opacity: 0; } 70% { transform: scale(.94); opacity: 1; } 100% { transform: scale(1); } }
-[data-skin="bitacora"] .hb-stamp { right: 4px; bottom: 6px; transform: rotate(-8deg); font-family: var(--hb-cond); font-weight: 800; font-size: 13px; line-height: 1;
-  letter-spacing: .08em; color: var(--h-ok); border: 2px solid var(--h-ok); border-radius: 3px; padding: 3px 5px; background: color-mix(in srgb, var(--h-surface) 80%, transparent); }
-[data-skin="bitacora"] .hb-track { border-radius: 2px; height: 10px; }
-[data-skin="bitacora"] .hb-fill { background: repeating-linear-gradient(-45deg, var(--h-accent), var(--h-accent) 8px, var(--h-accent-hover) 8px, var(--h-accent-hover) 16px); }
-[data-skin="bitacora"] .hb-tier .hb-m { border-radius: 6px; }
-[data-skin="bitacora"] .hb-tier.got .hb-m { border-color: var(--h-accent); }
-[data-skin="bitacora"] .hb-tier small { font-family: var(--hb-cond); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; }
-[data-skin="bitacora"] .hb-week i { border-radius: 2px; width: 14px; height: 8px; }
-[data-skin="bitacora"] .hb-count b { font-family: var(--hb-cond); font-weight: 800; font-size: 26px; }
-[data-skin="bitacora"] .hb-title { font-family: var(--hb-cond); font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
-[data-skin="bitacora"] h1.hb-title { font-size: 34px; }
-[data-skin="bitacora"] h3.hb-title { font-size: 20px; }
-[data-skin="bitacora"] .hb-dlg-body header h3 { font-family: var(--hb-cond); font-weight: 800; font-size: 28px; text-transform: uppercase; }
-[data-skin="bitacora"] .hb-dlg, [data-skin="bitacora"] .hb-tg { border-radius: 6px; }
-[data-skin="bitacora"] .hb-toast { border-radius: 4px; font-family: var(--hb-cond); font-size: 20px; letter-spacing: .04em; text-transform: uppercase; }
-.hb-plus1 { font-family: var(--hb-cond); font-weight: 800; font-size: 26px; color: var(--h-accent); animation: hb-up .8s ease-out forwards; }
-@keyframes hb-up { to { transform: translateY(-50px); opacity: 0; } }
-
-/* ——— Estilo CUADERNO ——— */
-[data-skin="cuaderno"] .hb-planner { background: var(--hb-paper); border-radius: var(--h-r-lg); padding: 28px 20px 20px;
+/* ——— Estilo cuaderno: planner con stickers y estrellas ——— */
+.hb .hb-planner { background: var(--hb-paper); border-radius: var(--h-r-lg); padding: 28px 20px 20px;
   background-image: radial-gradient(var(--hb-paper-line) 1px, transparent 1.2px); background-size: 16px 16px; }
-[data-skin="cuaderno"] .hb-rings { position: absolute; top: -10px; left: 0; right: 0; display: flex; justify-content: space-evenly; pointer-events: none; }
-[data-skin="cuaderno"] .hb-rings i { width: 12px; height: 22px; border-radius: 8px; border: 3px solid var(--hb-ring); background: var(--h-bg); }
-[data-skin="cuaderno"] .hb-month h2 { font-family: var(--hb-hand); font-size: 46px; color: var(--h-accent-text); }
-[data-skin="cuaderno"] .hb-month h2 small { font-size: 26px; color: var(--h-text-muted); margin-left: 6px; }
-[data-skin="cuaderno"] .hb-tag { display: none; }
-[data-skin="cuaderno"] .hb-arrow { border-radius: 50%; }
-[data-skin="cuaderno"] .hb-cheer { font-family: var(--hb-hand); font-size: 24px; }
-[data-skin="cuaderno"] .hb-stat { border-radius: var(--h-r-pill); }
-[data-skin="cuaderno"] .hb-day { border-radius: 10px; border-color: var(--hb-paper-line); }
-[data-skin="cuaderno"] .hb-day.is-today .hb-n::after { content: " hoy"; font-weight: 400; font-size: var(--h-fs-xs); }
-[data-skin="cuaderno"] .hb-day.is-star { background: linear-gradient(160deg, var(--hb-gold-soft), var(--h-surface) 70%); }
-[data-skin="cuaderno"] .hb-badge { top: -8px; right: -6px; width: 26px; height: 26px; background: var(--hb-gold); color: #fff; border-radius: 50%; font-size: 15px; box-shadow: 0 1px 3px rgb(0 0 0 / .25); transform: rotate(12deg); }
-[data-skin="cuaderno"] .hb-stk { border-radius: 50%; background: color-mix(in srgb, var(--c) 24%, var(--h-surface)); border: 2px solid var(--hb-edge);
+.hb .hb-rings { position: absolute; top: -10px; left: 0; right: 0; display: flex; justify-content: space-evenly; pointer-events: none; }
+.hb .hb-rings i { width: 12px; height: 22px; border-radius: 8px; border: 3px solid var(--hb-ring); background: var(--h-bg); }
+.hb .hb-month h2 { font-family: var(--hb-hand); font-size: 46px; color: var(--h-accent-text); }
+.hb .hb-month h2 small { font-size: 26px; color: var(--h-text-muted); margin-left: 6px; }
+.hb .hb-arrow { border-radius: 50%; }
+.hb .hb-cheer { font-family: var(--hb-hand); font-size: 24px; }
+.hb .hb-stat { border-radius: var(--h-r-pill); }
+.hb .hb-day { border-radius: 10px; border-color: var(--hb-paper-line); }
+.hb .hb-day.is-today .hb-n::after { content: " hoy"; font-weight: 400; font-size: var(--h-fs-xs); }
+.hb .hb-day.is-star { background: linear-gradient(160deg, var(--hb-gold-soft), var(--h-surface) 70%); }
+.hb .hb-badge { top: -8px; right: -6px; width: 26px; height: 26px; background: var(--hb-gold); color: #fff; border-radius: 50%; font-size: 15px; box-shadow: 0 1px 3px rgb(0 0 0 / .25); transform: rotate(12deg); }
+.hb .hb-stk { border-radius: 50%; background: color-mix(in srgb, var(--c) 24%, var(--h-surface)); border: 2px solid var(--hb-edge);
   box-shadow: 0 1px 2px rgb(46 38 32 / .25); transform: rotate(var(--r, 0deg)); }
-[data-skin="cuaderno"] .hb-stk.pop { animation: hb-pop .5s var(--h-ease); }
+.hb .hb-stk.pop { animation: hb-pop .5s var(--h-ease); }
 @keyframes hb-pop { 0% { transform: scale(1.9) rotate(-25deg); opacity: 0; } 60% { transform: scale(.9) rotate(var(--r)); opacity: 1; } 100% { transform: scale(1) rotate(var(--r)); } }
-[data-skin="cuaderno"] .hb-stamp { right: -4px; bottom: -6px; transform: rotate(-14deg); font-family: var(--hb-hand); font-weight: 700; font-size: 17px; line-height: .95; color: var(--h-accent);
+.hb .hb-stamp { right: -4px; bottom: -6px; transform: rotate(-14deg); font-family: var(--hb-hand); font-weight: 700; font-size: 17px; line-height: .95; color: var(--h-accent);
   border: 2px dashed var(--h-accent); border-radius: 50%; width: 62px; height: 62px; display: grid; place-items: center; background: color-mix(in srgb, var(--h-accent-soft) 75%, transparent); opacity: .92; }
-[data-skin="cuaderno"] .hb-track { border-radius: var(--h-r-pill); }
-[data-skin="cuaderno"] .hb-fill { background: linear-gradient(90deg, #C98A1B, var(--hb-gold)); }
-[data-skin="cuaderno"] .hb-tier .hb-m { border-radius: 50%; }
-[data-skin="cuaderno"] .hb-tier.got .hb-m { border-color: var(--hb-gold); box-shadow: 0 0 0 4px var(--hb-gold-soft); }
-[data-skin="cuaderno"] .hb-week i { border-radius: 50%; }
-[data-skin="cuaderno"] .hb-dlg-body header h3 { font-family: var(--hb-hand); font-size: 32px; }
-[data-skin="cuaderno"] .hb-toast { border-radius: var(--h-r-pill); }
+.hb .hb-track { border-radius: var(--h-r-pill); }
+.hb .hb-fill { background: linear-gradient(90deg, #C98A1B, var(--hb-gold)); }
+.hb .hb-tier .hb-m { border-radius: 50%; }
+.hb .hb-tier.got .hb-m { border-color: var(--hb-gold); box-shadow: 0 0 0 4px var(--hb-gold-soft); }
+.hb .hb-week i { border-radius: 50%; }
+.hb .hb-dlg-body header h3 { font-family: var(--hb-hand); font-size: 32px; }
+.hb .hb-toast { border-radius: var(--h-r-pill); }
 .hb-confetti { font-size: 18px; animation: hb-fly .9s ease-out forwards; }
 @keyframes hb-fly { to { transform: translate(var(--dx), var(--dy)) rotate(260deg); opacity: 0; } }
 
@@ -171,7 +129,6 @@
   .hb .hb-planner { padding-left: 8px; padding-right: 8px; }
   .hb .hb-month h2 { font-size: 34px; }
   .hb .hb-month h2 small { font-size: 20px; }
-  .hb .hb-tag { font-size: 11px; padding: 2px 5px; }
   .hb .hb-arrow { width: 32px; height: 32px; }
   .hb-dow, .hb-cal { gap: 3px; }
   .hb-day { min-height: 70px; padding: 3px; gap: 2px; }
@@ -179,11 +136,9 @@
   .hb .hb-day.is-today .hb-n::after { content: ""; }
   .hb-cal .hb-stk, .hb-legend .hb-stk { --sz: 19px; border-width: 1.5px; }
   .hb-stickers { gap: 1px; }
-  [data-skin="cuaderno"] .hb-badge { width: 18px; height: 18px; font-size: 11px; top: -6px; right: -4px; }
-  [data-skin="bitacora"] .hb-badge { width: 15px; height: 15px; font-size: 9px; top: 3px; right: 3px; }
-  [data-skin="cuaderno"] .hb-stamp { width: 44px; height: 44px; font-size: 12px; right: -3px; bottom: -4px; }
-  [data-skin="bitacora"] .hb-stamp { font-size: 9px; padding: 2px 3px; right: 1px; bottom: 3px; }
+  .hb .hb-badge { width: 18px; height: 18px; font-size: 11px; top: -6px; right: -4px; }
+  .hb .hb-stamp { width: 44px; height: 44px; font-size: 12px; right: -3px; bottom: -4px; }
   .hb-stat { padding: 4px 10px 4px 6px; }
   .hb .hb-stat b { font-size: var(--h-fs-md); }
 }
-@media (prefers-reduced-motion: reduce) { .hb-stk.pop, .hb-confetti, .hb-plus1 { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .hb-stk.pop, .hb-confetti { animation: none !important; } }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, Caveat } from "next/font/google";
-import { cookies } from "next/headers";
-import { HabitosVista, type Estilo } from "@/components/HabitosVista";
+import { Caveat } from "next/font/google";
+import { HabitosVista } from "@/components/HabitosVista";
 import { getHabitMarks, getHabits } from "@/lib/data";
 import { hoyChile } from "@/lib/finanzas";
 import { mesValido, rangoMes, sumarDias } from "@/lib/habitos";
@@ -9,7 +8,6 @@ import "./habitos.css";
 
 export const metadata: Metadata = { title: "Hábitos" };
 
-const condensada = Barlow_Condensed({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--hb-cond" });
 const manuscrita = Caveat({ subsets: ["latin"], weight: ["600", "700"], variable: "--hb-hand" });
 
 export default async function HabitosPage({ searchParams }: PageProps<"/habitos">) {
@@ -38,11 +36,9 @@ export default async function HabitosPage({ searchParams }: PageProps<"/habitos"
     );
   }
 
-  const estilo: Estilo = (await cookies()).get("habitos-estilo")?.value === "cuaderno" ? "cuaderno" : "bitacora";
-
   return (
-    <div className={`${condensada.variable} ${manuscrita.variable}`}>
-      <HabitosVista habits={habits} marks={marks} mes={mes} hoy={hoy} estiloInicial={estilo} />
+    <div className={manuscrita.variable}>
+      <HabitosVista habits={habits} marks={marks} mes={mes} hoy={hoy} />
     </div>
   );
 }

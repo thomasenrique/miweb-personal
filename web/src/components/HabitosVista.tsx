@@ -5,45 +5,26 @@ import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition, typ
 import { archivarHabito, guardarHabito, marcarHabito } from "@/app/habitos-actions";
 import {
   COLORES_HABITO, ICONOS_HABITO, MARCAS_DIA_COMPLETO, RANGOS, diaSemana, habitosActivos, marcasPorDia, mesVecino, racha,
-  rangoDelMes, rangoMes, resumenMes, semanaDeHabito, semanaISO, sumarDias,
+  rangoDelMes, rangoMes, resumenMes, semanaDeHabito, sumarDias,
 } from "@/lib/habitos";
 import type { Habit, HabitMark } from "@/lib/types";
-
-export type Estilo = "bitacora" | "cuaderno";
 
 const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 const DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 const DOW = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-/* Textos de cada estilo: la lógica es la misma, cambia el tono */
-const TXT = {
-  bitacora: {
-    unidad: "marcas", estrella: "días completos", racha: "días de racha", semanas: "semanas cerradas",
-    ico: ["✔", "⚡", "🔥", "▣"], badge: "⚡", stamp: <>SEMANA<br />CERRADA</>,
-    cheer: (dias: number, tot: number, total: number): ReactNode =>
-      total === 0 ? "Mes nuevo. A sumar."
-        : dias / tot >= 0.9 ? <>Constancia: <b>{dias}/{tot}</b> días activos. Sigue empujando.</>
-        : dias / tot >= 0.6 ? <>Buen ritmo: <b>{dias}</b> días activos este mes.</>
-        : <>Cada marca suma: <b>{total}</b> este mes.</>,
-    toast: ["Hecho", "Sumando", "Bien ahí", "Una más"], toastStar: "Día completo ⚡",
-    nota: (n: number) => n === 0 ? "Marca lo que hiciste" : n < MARCAS_DIA_COMPLETO ? `${n} hecho${n > 1 ? "s" : ""} · con ${MARCAS_DIA_COMPLETO} el día queda completo ⚡` : "Día completo ⚡",
-    medalla: "Rango del mes", falta: (n: number, t: string) => <>Te faltan <b>{n} marcas</b> para el rango {t.toLowerCase()}</>, oro: "Rango oro. Mes impecable.",
-    hecho: "Hecho",
-  },
-  cuaderno: {
-    unidad: "stickers", estrella: "días estrella", racha: "días de racha", semanas: "semanas perfectas",
-    ico: ["🏅", "⭐", "🔥", "💮"], badge: "★", stamp: <>¡Muy<br />bien!</>,
-    cheer: (dias: number, tot: number, total: number): ReactNode =>
-      total === 0 ? "¡Un mes nuevo para llenar de stickers! ✏️"
-        : dias / tot >= 0.9 ? `¡Vas increíble! Te moviste ${dias} de ${tot} días ✨`
-        : dias / tot >= 0.6 ? `¡Muy bien! ${dias} días con al menos un hábito 💪`
-        : `Cada sticker cuenta: ya llevas ${total} este mes 🌱`,
-    toast: ["¡Bien hecho!", "¡Otro sticker!", "¡Sigue así!", "¡Bacán!"], toastStar: "¡Día estrella! ⭐",
-    nota: (n: number) => n === 0 ? "Elige lo que lograste hoy" : n < MARCAS_DIA_COMPLETO ? `${n} sticker${n > 1 ? "s" : ""} · con ${MARCAS_DIA_COMPLETO} ganas una estrella ⭐` : "¡Día estrella! ⭐",
-    medalla: "Medalla del mes", falta: (n: number, t: string) => <>Te faltan <b>{n} stickers</b> para la medalla de {t.toLowerCase()}</>, oro: "¡Medalla de oro! Este mes fue de campeonato 🏆",
-    hecho: "¡Hecho!",
-  },
-} as const;
+/* Tono de "estrellas del colegio": siempre en positivo, sin marcar lo que faltó */
+const T = {
+  unidad: "stickers", estrella: "días estrella", racha: "días de racha", semanas: "semanas perfectas",
+  ico: ["🏅", "⭐", "🔥", "💮"], badge: "★",
+  cheer: (dias: number, tot: number, total: number) =>
+    total === 0 ? "¡Un mes nuevo para llenar de stickers! ✏️"
+      : dias / tot >= 0.9 ? `¡Vas increíble! Te moviste ${dias} de ${tot} días ✨`
+      : dias / tot >= 0.6 ? `¡Muy bien! ${dias} días con al menos un hábito 💪`
+      : `Cada sticker cuenta: ya llevas ${total} este mes 🌱`,
+  toast: ["¡Bien hecho!", "¡Otro sticker!", "¡Sigue así!", "¡Bacán!"], toastStar: "¡Día estrella! ⭐",
+  nota: (n: number) => n === 0 ? "Elige lo que lograste hoy" : n < MARCAS_DIA_COMPLETO ? `${n} sticker${n > 1 ? "s" : ""} · con ${MARCAS_DIA_COMPLETO} ganas una estrella ⭐` : "¡Día estrella! ⭐",
+};
 
 function Mancuerna() {
   return (
@@ -57,7 +38,7 @@ function Mancuerna() {
 
 const Icono = ({ k }: { k: string }) => (k === "svg:mancuerna" ? <Mancuerna /> : <>{k}</>);
 
-/** Giro estable (−8° a 8°) por sticker para el estilo Cuaderno. */
+/** Giro estable (−8° a 8°) por sticker, como pegado a mano. */
 function giro(s: string) {
   let h = 0;
   for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0;
@@ -74,11 +55,8 @@ function Sticker({ h, semilla, pop }: { h: Pick<Habit, "nombre" | "icono" | "col
 
 type Cambio = { habit_id: string; fecha: string; hecho: boolean };
 
-export function HabitosVista({ habits, marks, mes, hoy, estiloInicial }: {
-  habits: Habit[]; marks: HabitMark[]; mes: string; hoy: string; estiloInicial: Estilo;
-}) {
-  const [estilo, setEstilo] = useState<Estilo>(estiloInicial);
-  const t = TXT[estilo];
+export function HabitosVista({ habits, marks, mes, hoy }: { habits: Habit[]; marks: HabitMark[]; mes: string; hoy: string }) {
+  const t = T;
   const [, startTransition] = useTransition();
   const [optMarks, aplicar] = useOptimistic(marks, (st: HabitMark[], c: Cambio) =>
     c.hecho ? [...st, { id: `tmp-${c.habit_id}-${c.fecha}`, habit_id: c.habit_id, fecha: c.fecha }]
@@ -111,25 +89,15 @@ export function HabitosVista({ habits, marks, mes, hoy, estiloInicial }: {
     return () => clearTimeout(id);
   }, [aviso]);
 
-  function cambiarEstilo(e: Estilo) {
-    setEstilo(e);
-    document.cookie = `habitos-estilo=${e}; path=/; max-age=31536000; samesite=lax`;
-  }
-
   function efecto(x: number, y: number, color: string) {
     const host = (dlgDia.current?.open ? dlgDia.current : hostFx.current) ?? document.body;
-    const piezas = estilo === "bitacora" ? ["+1"] : ["★", "✦", "●", "★", "✦", "●", "★", "✦"];
+    const piezas = ["★", "✦", "●", "★", "✦", "●", "★", "✦"];
     piezas.forEach((p, i) => {
       const s = document.createElement("span");
+      const ang = (i / piezas.length) * Math.PI * 2;
       s.textContent = p;
-      if (estilo === "bitacora") {
-        s.className = "hb-fx hb-plus1";
-        s.style.cssText = `left:${x - 10}px;top:${y - 30}px`;
-      } else {
-        const ang = (i / piezas.length) * Math.PI * 2;
-        s.className = "hb-fx hb-confetti";
-        s.style.cssText = `left:${x}px;top:${y}px;color:var(${i % 2 ? color : "--hb-gold"});--dx:${Math.cos(ang) * 70}px;--dy:${Math.sin(ang) * 70 - 20}px`;
-      }
+      s.className = "hb-fx hb-confetti";
+      s.style.cssText = `left:${x}px;top:${y}px;color:var(${i % 2 ? color : "--hb-gold"});--dx:${Math.cos(ang) * 70}px;--dy:${Math.sin(ang) * 70 - 20}px`;
       host.appendChild(s);
       setTimeout(() => s.remove(), 950);
     });
@@ -172,7 +140,7 @@ export function HabitosVista({ habits, marks, mes, hoy, estiloInicial }: {
           {ids.length > vis.length && <span className="hb-more">+{ids.length - vis.length}</span>}
         </span>
         {star && <span className="hb-badge" aria-hidden="true">{t.badge}</span>}
-        {r.semanasCerradas.includes(f) && <span className="hb-stamp">{t.stamp}</span>}
+        {r.semanasCerradas.includes(f) && <span className="hb-stamp">¡Muy<br />bien!</span>}
       </button>,
     );
   }
@@ -183,17 +151,10 @@ export function HabitosVista({ habits, marks, mes, hoy, estiloInicial }: {
   const nDia = dia ? diaSemana(dia) : 0;
 
   return (
-    <div className="hb h-stack" data-skin={estilo} ref={hostFx}>
+    <div className="hb h-stack" ref={hostFx}>
       <div className="h-row">
-        <h1 className="hb-title">Hábitos</h1>
+        <h1>Hábitos</h1>
         <button type="button" className="h-btn h-btn--primary" onClick={() => setEditando("nuevo")}>+ Nuevo hábito</button>
-      </div>
-      <div className="hb-skin">
-        <span className="h-muted">Estilo</span>
-        <div className="h-seg" role="group" aria-label="Estilo de la vista">
-          <button type="button" aria-pressed={estilo === "bitacora"} onClick={() => cambiarEstilo("bitacora")}>Bitácora</button>
-          <button type="button" aria-pressed={estilo === "cuaderno"} onClick={() => cambiarEstilo("cuaderno")}>Cuaderno</button>
-        </div>
       </div>
       {error && <p className="h-error" role="alert">{error}</p>}
 
@@ -201,7 +162,6 @@ export function HabitosVista({ habits, marks, mes, hoy, estiloInicial }: {
         <div className="hb-rings" aria-hidden="true">{Array.from({ length: 8 }, (_, i) => <i key={i} />)}</div>
         <div className="hb-month">
           <h2>{MESES[m - 1]}<small>{y}</small></h2>
-          {esActual && <span className="hb-tag">Semana {semanaISO(hoy)}</span>}
           <span className="hb-spacer" />
           <Link className="hb-arrow" href={`/habitos?mes=${mesVecino(mes, -1)}`} aria-label="Mes anterior">‹</Link>
           <Link className="hb-arrow" href={`/habitos?mes=${mesVecino(mes, 1)}`} aria-label="Mes siguiente" aria-disabled={esActual}>›</Link>
@@ -223,7 +183,7 @@ export function HabitosVista({ habits, marks, mes, hoy, estiloInicial }: {
 
       <section className="h-card">
         <div className="h-row">
-          <h3 className="hb-title" style={{ margin: 0 }}>{t.medalla}</h3>
+          <h3 style={{ margin: 0 }}>Medalla del mes</h3>
           <span className="h-pill h-pill--accent">{rango.logrado ? `${rango.logrado.icono} ${rango.logrado.nombre}` : "En camino"}</span>
         </div>
         <div className="hb-track">
@@ -234,11 +194,13 @@ export function HabitosVista({ habits, marks, mes, hoy, estiloInicial }: {
             </div>
           ))}
         </div>
-        <p className="h-muted" style={{ margin: 0 }}>{rango.siguiente ? <>{t.falta(rango.faltan, rango.siguiente.nombre)} {rango.siguiente.icono}</> : t.oro}</p>
+        <p className="h-muted" style={{ margin: 0 }}>{rango.siguiente
+          ? <>Te faltan <b>{rango.faltan} stickers</b> para la medalla de {rango.siguiente.nombre.toLowerCase()} {rango.siguiente.icono}</>
+          : "¡Medalla de oro! Este mes fue de campeonato 🏆"}</p>
       </section>
 
       <section className="h-card">
-        <div className="h-row"><h3 className="hb-title" style={{ margin: 0 }}>Mis hábitos</h3><span className="h-muted">esta semana · este mes</span></div>
+        <div className="h-row"><h3 style={{ margin: 0 }}>Mis hábitos</h3><span className="h-muted">esta semana · este mes</span></div>
         {activos.length === 0 && (
           <div className="hb-empty">
             <p className="h-muted">Todavía no tienes hábitos. Crea el primero, por ejemplo Gimnasio con la mancuerna.</p>
@@ -281,7 +243,7 @@ export function HabitosVista({ habits, marks, mes, hoy, estiloInicial }: {
                     <button key={h.id} type="button" className="hb-tg" style={{ "--c": `var(${h.color})` } as CSSProperties} aria-pressed={on}
                       onClick={(e) => { const b = e.currentTarget.getBoundingClientRect(); alternar(h, dia, b.left + 28, b.top + b.height / 2); }}>
                       <Sticker h={h} semilla={dia + h.id} />
-                      <span><b>{h.nombre}</b><small>{on ? t.hecho : "Toca para marcar"}</small></span>
+                      <span><b>{h.nombre}</b><small>{on ? "¡Hecho!" : "Toca para marcar"}</small></span>
                     </button>
                   );
                 })}
