@@ -1,21 +1,24 @@
 import Link from "next/link";
 import { GoalCard } from "@/components/GoalCard";
 import { EstadoPill, Monto } from "@/components/ui";
-import { getBills, getDebts, getGoals, getProviders } from "@/lib/data";
+import { getBills, getDebts, getGoals, getProviders, getSueldo } from "@/lib/data";
 import { aPagarEnPeriodo, saldoRestante } from "@/lib/deudas";
 import {
   calcularPendientes, formatCLP, hoyChile, periodoDe, textoVencimiento, totalPorGrupo, tituloPeriodo,
 } from "@/lib/finanzas";
+import { calcularPresupuesto } from "@/lib/presupuesto";
 
 export default async function InicioPage() {
   const hoy = hoyChile();
   const mes = periodoDe(hoy);
-  const [bills, providers, goals, deudas] = await Promise.all([
+  const [bills, providers, goals, deudas, sueldo] = await Promise.all([
     getBills([mes]),
     getProviders(),
     getGoals().catch(() => []),
     getDebts().catch(() => []),
+    getSueldo().catch(() => null),
   ]);
+  const pres = sueldo != null ? calcularPresupuesto(sueldo, { bills, providers, debts: deudas, goals }, mes, hoy) : null;
   const metas = goals.filter((g) => g.estado === "activa").slice(0, 3);
   const t = totalPorGrupo(bills);
   const pendientes = calcularPendientes(providers, bills, mes, hoy);
@@ -24,6 +27,32 @@ export default async function InicioPage() {
   return (
     <>
       <h1>Hola 👋</h1>
+
+      {pres ? (
+        <section className="h-card">
+          <div className="h-metric__label">Libre disponible en {tituloPeriodo(mes, mes).toLowerCase()}</div>
+          <div className="h-metric__value" style={pres.libre < 0 ? { color: "var(--h-bad-text)" } : undefined}>
+            {formatCLP(pres.libre)}
+          </div>
+          <div className="h-progress" style={{ marginTop: 8 }} role="img" aria-label={`${Math.round(pres.usado * 100)}% del sueldo comprometido`}>
+            <span style={{ width: `${Math.min(100, pres.usado * 100)}%`, ...(pres.libre < 0 ? { background: "var(--h-bad)" } : {}) }} />
+          </div>
+          <div className="h-muted" style={{ marginTop: 4 }}>{Math.round(pres.usado * 100)}% del sueldo comprometido</div>
+          <ul className="h-list" style={{ marginTop: 8 }}>
+            <li><span className="h-grow">💼 Sueldo líquido</span><Monto valor={pres.sueldo} /></li>
+            <li><span className="h-grow">🧾 Cuentas del mes</span><span className="h-num">−{formatCLP(pres.cuentas)}</span></li>
+            <li><span className="h-grow">💳 Cuotas de deudas</span><span className="h-num">−{formatCLP(pres.cuotas)}</span></li>
+            <li><span className="h-grow">🎯 Aporte a metas</span><span className="h-num">−{formatCLP(pres.metas)}</span></li>
+          </ul>
+          <Link className="h-btn h-btn--ghost" href="/ajustes#sueldo" style={{ marginTop: 8 }}>Editar sueldo</Link>
+        </section>
+      ) : (
+        <section className="h-card h-card--soft">
+          <p style={{ margin: 0 }}>
+            Ingresa tu sueldo para ver cuánto te queda libre cada mes. <Link href="/ajustes#sueldo">Agregar sueldo</Link>.
+          </p>
+        </section>
+      )}
 
       <section className="h-card">
         <div className="h-metric__label">Pagado en {tituloPeriodo(mes, mes).toLowerCase()}</div>

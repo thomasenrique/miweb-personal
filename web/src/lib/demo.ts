@@ -117,10 +117,12 @@ type Store = {
   contributions: Contribution[];
   cards: Card[];
   debts: Debt[];
+  sueldo: number | null;
 };
 
 // Un solo store por proceso (sobrevive a recargas en desarrollo).
 const g = globalThis as unknown as { __demoStore?: Store };
 if (g.__demoStore && !g.__demoStore.goals) Object.assign(g.__demoStore, generarMetas());
 if (g.__demoStore && !g.__demoStore.cards) Object.assign(g.__demoStore, generarDeudas());
-export const demo: Store = (g.__demoStore ??= { categories, providers, bills: generarCuentas(), ...generarMetas(), ...generarDeudas() });
+if (g.__demoStore && g.__demoStore.sueldo === undefined) g.__demoStore.sueldo = 1_650_000;
+export const demo: Store = (g.__demoStore ??= { categories, providers, bills: generarCuentas(), ...generarMetas(), ...generarDeudas(), sueldo: 1_650_000 });

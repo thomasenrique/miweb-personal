@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
-  createBill, createProvider, deleteBill, deleteProvider, getProvider, modoDemo,
+  createBill, createProvider, saveSueldo, deleteBill, deleteProvider, getProvider, modoDemo,
   updateBill, updateProvider, type BillInput, type ProviderInput,
 } from "@/lib/data";
 import { dolarDelDia } from "@/lib/dolar";
@@ -188,4 +188,14 @@ export async function cerrarSesion() {
     await sb.auth.signOut();
   }
   redirect("/login");
+}
+
+// ——— Sueldo ———
+
+export async function guardarSueldo(form: FormData) {
+  const t = texto(form, "sueldo");
+  const sueldo = t ? parseMonto(t) : null;
+  if (sueldo !== null && !(sueldo >= 0)) volverConError("/ajustes", "Escribe tu sueldo líquido, por ejemplo 1.650.000.");
+  await saveSueldo(sueldo === null ? null : Math.round(sueldo));
+  redirect(`/ajustes?aviso=${sueldo === null ? "sueldo-borrado" : "sueldo"}`);
 }

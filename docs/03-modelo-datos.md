@@ -132,3 +132,13 @@ Proveedores reales, montos y días de vencimiento se cargan en la primera pantal
 | primer_mes_pago | char(7) | YYYY-MM de la cuota 1 |
 | dia_pago | smallint | créditos; las compras usan el de la tarjeta |
 | saldada | boolean | prepago total |
+
+## settings (sueldo)
+
+Una fila por usuario (`user_id` es la clave). Migración `0004_sueldo.sql`.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| sueldo_liquido | integer, null | Sueldo líquido mensual fijo, en CLP |
+
+**Libre disponible** (`lib/presupuesto.ts`) = sueldo − cuentas del mes (registradas + estimado de las que faltan) − cuotas de deudas del mes − aporte mensual planificado de metas activas.

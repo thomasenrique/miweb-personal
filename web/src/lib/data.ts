@@ -342,3 +342,19 @@ export async function deleteDebt(id: string) {
   const sb = await crearSupabase();
   falla((await sb.from("debts").delete().eq("id", id)).error);
 }
+
+// ——— Sueldo ———
+
+export async function getSueldo(): Promise<number | null> {
+  if (modoDemo) return demo.sueldo ?? null;
+  const sb = await crearSupabase();
+  const { data, error } = await sb.from("settings").select("sueldo_liquido").maybeSingle();
+  falla(error);
+  return (data as { sueldo_liquido: number | null } | null)?.sueldo_liquido ?? null;
+}
+
+export async function saveSueldo(sueldo: number | null) {
+  if (modoDemo) return void (demo.sueldo = sueldo);
+  const sb = await crearSupabase();
+  falla((await sb.from("settings").upsert({ sueldo_liquido: sueldo, updated_at: new Date().toISOString() })).error);
+}

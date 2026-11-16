@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cerrarSesion } from "@/app/actions";
+import { cerrarSesion, guardarSueldo } from "@/app/actions";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { Encabezado, Monto } from "@/components/ui";
-import { getProviders, modoDemo } from "@/lib/data";
+import { MoneyInput } from "@/components/MoneyInput";
+import { Encabezado, ErrorMsg, Monto } from "@/components/ui";
+import { getProviders, getSueldo, modoDemo } from "@/lib/data";
 import type { ProviderFull } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Ajustes" };
@@ -11,6 +12,8 @@ export const metadata: Metadata = { title: "Ajustes" };
 const AVISOS: Record<string, string> = {
   eliminado: "Proveedor eliminado.",
   desactivado: "El proveedor tiene cuentas registradas, así que quedó desactivado en vez de eliminarse.",
+  sueldo: "Sueldo guardado. Revisa tu libre disponible en Inicio.",
+  "sueldo-borrado": "Sueldo borrado.",
 };
 
 function Lista({ titulo, items }: { titulo: string; items: ProviderFull[] }) {
@@ -47,8 +50,8 @@ function Lista({ titulo, items }: { titulo: string; items: ProviderFull[] }) {
 }
 
 export default async function AjustesPage({ searchParams }: PageProps<"/ajustes">) {
-  const { aviso } = await searchParams;
-  const providers = await getProviders();
+  const { aviso, error } = await searchParams;
+  const [providers, sueldo] = await Promise.all([getProviders(), getSueldo().catch(() => null)]);
 
   return (
     <>
@@ -57,6 +60,21 @@ export default async function AjustesPage({ searchParams }: PageProps<"/ajustes"
         accion={<Link className="h-btn h-btn--primary" href="/ajustes/proveedor/nuevo">+ Proveedor</Link>}
       />
       {typeof aviso === "string" && AVISOS[aviso] && <p className="h-card h-card--soft" role="status">{AVISOS[aviso]}</p>}
+      <ErrorMsg error={error} />
+      <section className="h-card h-stack" id="sueldo">
+        <h3>💼 Sueldo líquido</h3>
+        <p className="h-muted" style={{ margin: 0 }}>
+          Lo que te llega cada mes. Se usa en Inicio para calcular cuánto te queda libre después de cuentas, cuotas y metas.
+        </p>
+        <form action={guardarSueldo} className="h-row" style={{ alignItems: "flex-end", flexWrap: "wrap" }}>
+          <div className="h-field h-grow">
+            <label htmlFor="sueldo">Monto mensual</label>
+            <MoneyInput id="sueldo" name="sueldo" defaultValue={sueldo} placeholder="1.650.000" />
+          </div>
+          <button className="h-btn h-btn--primary" type="submit">Guardar</button>
+        </form>
+      </section>
+      <h2>Proveedores</h2>
       <p className="h-muted" style={{ margin: 0 }}>
         Tus proveedores con su día de vencimiento y monto estimado. Con esto la app te avisa qué falta pagar.
       </p>
