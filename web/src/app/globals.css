@@ -35,3 +35,38 @@ select.h-input { appearance: auto; }
 .h-tarjeta-grupo + .h-tarjeta-grupo { margin-top: var(--h-s4); }
 .h-tarjeta-cab { padding: var(--h-s2) var(--h-s3); margin-top: var(--h-s2); border-radius: var(--h-r-md); background: var(--h-surface-2); }
 form:has(#category_id option[data-sub]:checked) .h-solo-sub { display: grid; }
+
+/* Hitos de la proyección (Inicio › Libre disponible): deudas que terminan y metas que se logran */
+.h-hitos__lista { list-style: none; margin: 0; padding: 0; position: relative; }
+.h-hitos__lista::before { content: ""; position: absolute; left: 19px; top: 24px; bottom: 24px; width: 2px; background: var(--h-border); }
+.h-hito { position: relative; display: flex; align-items: center; gap: var(--h-s3); padding: var(--h-s2) 0; }
+.h-hito__ico { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; font-size: 20px; background: var(--h-surface-2); border: 2px solid var(--h-border); position: relative; z-index: 1; }
+.h-hito--deuda .h-hito__ico { background: var(--h-ok-soft); border-color: var(--h-ok); }
+.h-hito--meta .h-hito__ico { background: var(--h-accent-soft); border-color: var(--h-accent); }
+.h-hito > .h-grow { flex: 1; min-width: 0; }
+.h-hito__titulo { line-height: 1.3; }
+.h-hito__cuando { font-size: var(--h-fs-xs); color: var(--h-text-muted); margin-top: 2px; }
+.h-hito .h-pill { flex: none; white-space: nowrap; }
+.h-hito.is-proximo .h-hito__ico { animation: h-latido 2.4s var(--h-ease) infinite; }
+.h-hito__tag { display: inline-block; font-size: 11px; font-weight: var(--h-fw-bold); text-transform: uppercase; letter-spacing: .04em; color: var(--h-accent-text); }
+.h-hitos__resumen { display: flex; align-items: center; gap: var(--h-s4); margin-top: var(--h-s3); padding: var(--h-s3) var(--h-s4); border-radius: var(--h-r-md); background: var(--h-ok-soft); }
+.h-hitos__resumen b { font-size: var(--h-fs-lg); font-variant-numeric: tabular-nums; }
+.h-hitos__meta { color: var(--h-ok-text); }
+.h-hitos__flecha { font-size: var(--h-fs-lg); color: var(--h-ok-text); }
+@keyframes h-latido { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--h-accent) 45%, transparent); } 50% { box-shadow: 0 0 0 8px transparent; } }
+@media (prefers-reduced-motion: reduce) { .h-hito.is-proximo .h-hito__ico { animation: none; } }
+@media (max-width: 480px) {
+  .h-hito { flex-wrap: wrap; }
+  .h-hito .h-pill { margin-left: 52px; }
+  .h-hitos__lista::before { display: none; }
+}
+
+.h-proy tr.is-hito td { background: color-mix(in srgb, var(--h-ok-soft) 55%, transparent); }
+.h-proy tr.is-hito td:first-child { box-shadow: inset 3px 0 0 var(--h-ok); }
+.h-proy__chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; white-space: normal; }
+.h-chip { display: inline-block; padding: 1px 8px; border-radius: var(--h-r-pill); font-size: var(--h-fs-xs); font-weight: var(--h-fw-bold); }
+.h-chip--deuda { background: var(--h-ok-soft); color: var(--h-ok-text); }
+.h-chip--meta { background: var(--h-accent-soft); color: var(--h-accent-text); }
+.h-proy small.h-proy__sube { color: var(--h-ok-text); font-weight: var(--h-fw-bold); }
+.h-proy__bar { display: block; height: 4px; margin-top: 4px; margin-left: auto; width: 100%; max-width: 120px; border-radius: var(--h-r-pill); background: var(--h-surface-2); overflow: hidden; }
+.h-proy__bar span { display: block; height: 100%; margin-left: auto; background: var(--h-ok); border-radius: inherit; }

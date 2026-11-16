@@ -55,8 +55,14 @@ test("proyección: libera cuotas al terminar la deuda y deja de aportar a metas 
   assert.deepEqual(r.map((m) => m.metas), [100_000, 100_000, 100_000, 50_000]);
   assert.deepEqual(r.map((m) => m.libre), [810_000, 810_000, 860_000, 910_000]);
   assert.equal(r[3].acumulado, 810_000 + 810_000 + 860_000 + 910_000);
-  assert.deepEqual(r[2].notas, ["termina Notebook"]);
-  assert.deepEqual(r[3].notas, ["logras Auto"]);
+  assert.deepEqual(r[2].hitos, [{ tipo: "deuda", nombre: "Notebook", icono: "✅", libera: 50_000, veces: 1 }]);
+  assert.deepEqual(r[3].hitos, [{ tipo: "meta", nombre: "Auto", icono: "🚗", libera: 100_000, veces: 1 }]);
+});
+
+test("proyección: agrupa deudas con el mismo nombre que terminan el mismo mes", () => {
+  const a: DebtFull = { ...deuda, id: "a", descripcion: "Club", n_cuotas: 1, valor_cuota: 10_000, primer_mes_pago: "2026-11" };
+  const r = proyectarLibre(500_000, { bills: [], providers: [], debts: [a, { ...a, id: "b" }, { ...a, id: "c" }], goals: [] }, "2026-11", "2026-11-15", 2);
+  assert.deepEqual(r[1].hitos, [{ tipo: "deuda", nombre: "Club", icono: "✅", libera: 30_000, veces: 3 }]);
 });
 
 test("proyección: cobro anual solo en su mes", () => {

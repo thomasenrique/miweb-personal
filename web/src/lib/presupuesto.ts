@@ -55,8 +55,24 @@ export type MesProyectado = {
   /** Suma del libre desde el mes actual hasta este (si se ahorra todo). */
   acumulado: number;
   /** Cambios que mueven el número: deudas que terminan, metas que se logran. */
-  notas: string[];
+  hitos: Hito[];
 };
+
+export type Hito = {
+  tipo: "deuda" | "meta";
+  nombre: string;
+  icono: string;
+  /** Plata que queda libre cada mes desde que se cumple (cuota o aporte que ya no se paga). */
+  libera: number;
+  /** Cuántas deudas con el mismo nombre terminan ese mes. */
+  veces: number;
+};
+
+function agregarHito(hitos: Hito[], h: Omit<Hito, "veces">) {
+  const igual = hitos.find((x) => x.tipo === h.tipo && x.nombre === h.nombre);
+  if (igual) { igual.libera += h.libera; igual.veces++; }
+  else hitos.push({ ...h, veces: 1 });
+}
 
 /**
  * Libre disponible del mes actual y los siguientes.
@@ -79,14 +95,16 @@ export function proyectarLibre(
 
   const out: MesProyectado[] = [{
     periodo, cuentas: actual.cuentas, cuotas: actual.cuotas, metas: actual.metas,
-    libre: actual.libre, acumulado: actual.libre, notas: [],
+    libre: actual.libre, acumulado: actual.libre, hitos: [],
   }];
   for (let i = 1; i < meses; i++) {
     const p = addMeses(periodo, i);
     const anterior = addMeses(p, -1);
-    const notas: string[] = [];
+    const hitos: Hito[] = [];
     for (const d of vigentes) {
-      if (addMeses(d.primer_mes_pago, d.n_cuotas - 1) === anterior) notas.push(`termina ${d.descripcion}`);
+      if (addMeses(d.primer_mes_pago, d.n_cuotas - 1) === anterior) {
+        agregarHito(hitos, { tipo: "deuda", nombre: d.descripcion, icono: "✅", libera: d.valor_cuota });
+      }
     }
     const cuentas = datos.providers.filter((pr) => cobraEnPeriodo(pr, p)).reduce((s, pr) => s + (datos.estimados?.get(pr.id) ?? pr.monto_estimado ?? 0), 0);
     const cuotas = aPagarEnPeriodo(datos.debts, p);
@@ -96,10 +114,10 @@ export function proyectarLibre(
       const a = Math.min(m.plan, m.restante);
       m.restante -= a;
       aporte += a;
-      if (m.restante === 0) notas.push(`logras ${m.g.nombre}`);
+      if (m.restante === 0) agregarHito(hitos, { tipo: "meta", nombre: m.g.nombre, icono: m.g.icono || "🎯", libera: m.plan });
     }
     const libre = sueldo - cuentas - cuotas - aporte;
-    out.push({ periodo: p, cuentas, cuotas, metas: aporte, libre, acumulado: out[i - 1].acumulado + libre, notas });
+    out.push({ periodo: p, cuentas, cuotas, metas: aporte, libre, acumulado: out[i - 1].acumulado + libre, hitos });
   }
   return out;
 }

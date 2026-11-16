@@ -8,7 +8,7 @@ import {
   addMeses, alertasVencimiento, calcularPendientes, cuentasPorPagar, estimadosVariables, formatCLP, hoyChile, mesCorto,
   periodoDe, totalPorGrupo, tituloPeriodo, ultimosPeriodos,
 } from "@/lib/finanzas";
-import { calcularPresupuesto, proyectarLibre } from "@/lib/presupuesto";
+import { calcularPresupuesto, proyectarLibre, type MesProyectado } from "@/lib/presupuesto";
 
 export default async function InicioPage({ searchParams }: PageProps<"/">) {
   const { aviso, vista, error } = await searchParams;
@@ -79,6 +79,8 @@ export default async function InicioPage({ searchParams }: PageProps<"/">) {
         </section>
       )}
 
+      {futuro.length > 0 && <HitosEnCamino futuro={futuro} mes={mes} />}
+
       {futuro.length > 0 && (
         <section className="h-card">
           <h3>Próximos 12 meses</h3>
@@ -86,21 +88,39 @@ export default async function InicioPage({ searchParams }: PageProps<"/">) {
             Estimado con tus montos de cuentas, cuotas vigentes y aportes a metas. El acumulado es lo que juntarías si ahorras todo lo libre.
           </p>
           <div className="h-table-wrap">
-            <table className="h-table">
+            <table className="h-table h-proy">
               <thead>
                 <tr><th>Mes</th><th>Libre del mes</th><th>Acumulado</th></tr>
               </thead>
               <tbody>
-                {futuro.map((m) => (
-                  <tr key={m.periodo}>
-                    <td>
-                      {mesCorto(m.periodo)}{m.periodo.slice(0, 4) !== mes.slice(0, 4) ? ` ${m.periodo.slice(2, 4)}` : ""}
-                      {m.notas.length > 0 && <small>{m.notas.join(" · ")}</small>}
-                    </td>
-                    <td className={m.libre < 0 ? "is-neg" : undefined}>{formatCLP(m.libre)}</td>
-                    <td className={m.acumulado < 0 ? "is-neg" : undefined}><b>{formatCLP(m.acumulado)}</b></td>
-                  </tr>
-                ))}
+                {futuro.map((m, i) => {
+                  const sube = i > 0 && m.hitos.length > 0 ? m.libre - futuro[i - 1].libre : 0;
+                  const maxLibre = Math.max(...futuro.map((x) => x.libre), 1);
+                  return (
+                    <tr key={m.periodo} className={m.hitos.length ? "is-hito" : undefined}>
+                      <td>
+                        {etiquetaMes(m.periodo, mes)}
+                        {m.hitos.length > 0 && (
+                          <span className="h-proy__chips">
+                            {m.hitos.map((h) => (
+                              <span key={h.tipo + h.nombre} className={`h-chip h-chip--${h.tipo}`}>
+                                {h.tipo === "meta" ? "🏆" : "✅"} {h.nombre}{h.veces > 1 ? ` ×${h.veces}` : ""}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </td>
+                      <td className={m.libre < 0 ? "is-neg" : undefined}>
+                        {formatCLP(m.libre)}
+                        {sube > 0 && <small className="h-proy__sube">▲ {formatCLP(sube)}</small>}
+                        <span className="h-proy__bar" aria-hidden="true">
+                          <span style={{ width: `${Math.max(0, (m.libre / maxLibre) * 100)}%` }} />
+                        </span>
+                      </td>
+                      <td className={m.acumulado < 0 ? "is-neg" : undefined}><b>{formatCLP(m.acumulado)}</b></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -184,5 +204,65 @@ export default async function InicioPage({ searchParams }: PageProps<"/">) {
       </>
       )}
     </>
+  );
+}
+
+function etiquetaMes(periodo: string, mes: string) {
+  return `${mesCorto(periodo)}${periodo.slice(0, 4) !== mes.slice(0, 4) ? ` ${periodo.slice(2, 4)}` : ""}`;
+}
+
+function cuandoEs(i: number) {
+  return i === 1 ? "el próximo mes" : `en ${i} meses`;
+}
+
+/** Línea de tiempo de deudas que terminan y metas que se logran, con la plata que liberan. */
+function HitosEnCamino({ futuro, mes }: { futuro: MesProyectado[]; mes: string }) {
+  const hitos = futuro.flatMap((m, i) => m.hitos.map((h) => ({ ...h, i, periodo: m.periodo })));
+  if (hitos.length === 0) return null;
+  const ultimo = hitos[hitos.length - 1];
+  const libreHoy = futuro[0].libre;
+  // Una meta deja de pedir aporte el mes siguiente al que se logra.
+  const final = futuro[Math.min(futuro.length - 1, ultimo.i + (hitos.some((h) => h.i === ultimo.i && h.tipo === "meta") ? 1 : 0))];
+  const libreFinal = final.libre;
+  const extra = libreFinal - libreHoy;
+  return (
+    <section className="h-card h-hitos">
+      <h3>Hitos en camino 🎉</h3>
+      <p className="h-muted" style={{ margin: "0 0 12px" }}>
+        Cada deuda que terminas y cada meta que logras te deja más plata libre al mes.
+      </p>
+      <ol className="h-hitos__lista">
+        {hitos.map((h, n) => (
+          <li key={`${h.periodo}-${h.tipo}-${h.nombre}`} className={`h-hito h-hito--${h.tipo}${n === 0 ? " is-proximo" : ""}`}>
+            <span className="h-hito__ico" aria-hidden="true">{h.tipo === "meta" ? h.icono : "✅"}</span>
+            <div className="h-grow">
+              {n === 0 && <span className="h-hito__tag">Próximo hito</span>}
+              <div className="h-hito__titulo">
+                {h.tipo === "meta" ? <>¡Logras <b>{h.nombre}</b>!</> : <>Terminas de pagar <b>{h.nombre}</b></>}
+                {h.veces > 1 && <span className="h-muted"> ×{h.veces}</span>}
+              </div>
+              <div className="h-hito__cuando">{etiquetaMes(h.periodo, mes)} · {cuandoEs(h.i)}</div>
+            </div>
+            <span className={`h-pill ${h.tipo === "meta" ? "h-pill--accent" : "h-pill--ok"}`}>+{formatCLP(h.libera)}/mes</span>
+          </li>
+        ))}
+      </ol>
+      <div className="h-hitos__resumen">
+        <div>
+          <div className="h-metric__label">Tu libre hoy</div>
+          <b>{formatCLP(libreHoy)}</b>
+        </div>
+        <span className="h-hitos__flecha" aria-hidden="true">→</span>
+        <div>
+          <div className="h-metric__label">En {etiquetaMes(final.periodo, mes)}</div>
+          <b className="h-hitos__meta">{formatCLP(libreFinal)}</b>
+        </div>
+      </div>
+      {extra > 0 && (
+        <p className="h-muted" style={{ margin: "8px 0 0" }}>
+          Al cumplir estos {hitos.length} hitos tendrás {formatCLP(extra)} más libres cada mes. ¡Sigue así!
+        </p>
+      )}
+    </section>
   );
 }
