@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cerrarSesion, guardarSueldo } from "@/app/actions";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { MoneyInput } from "@/components/MoneyInput";
+import { TemaSwitch } from "@/components/TemaSwitch";
 import { Encabezado, ErrorMsg, Monto } from "@/components/ui";
 import { getProviders, getSueldo, modoDemo } from "@/lib/data";
 import { agruparPorTarjeta, fechaCorta, formatCLP, hoyChile, type GrupoTarjeta } from "@/lib/finanzas";
@@ -139,6 +140,13 @@ export default async function AjustesPage({ searchParams }: PageProps<"/ajustes"
           </div>
           <button className="h-btn h-btn--primary" type="submit">Guardar</button>
         </form>
+      </section>
+      <section className="h-card h-row" id="apariencia">
+        <span className="h-grow">
+          <h3>🌓 Apariencia</h3>
+          <span className="h-muted">Cambia toda la web entre modo claro y oscuro.</span>
+        </span>
+        <TemaSwitch />
       </section>
       <h2>Proveedores</h2>
       <p className="h-muted" style={{ margin: 0 }}>

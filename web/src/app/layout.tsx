@@ -15,7 +15,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es-CL">
+    <html lang="es-CL" suppressHydrationWarning>
+      <head>
+        {/* Aplica el tema guardado (claro/oscuro) antes del primer pintado; sin preferencia, sigue al sistema */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

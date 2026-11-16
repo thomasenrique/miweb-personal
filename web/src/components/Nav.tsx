@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TemaSwitch } from "./TemaSwitch";
 
 const ITEMS = [
   { href: "/", icono: "⌂", texto: "Inicio" },
@@ -24,6 +25,7 @@ export function Nav() {
           </Link>
         );
       })}
+      <TemaSwitch className="h-nav__tema" />
     </nav>
   );
 }
