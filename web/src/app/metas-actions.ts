@@ -88,7 +88,9 @@ export async function eliminarMeta(form: FormData) {
 
 export async function agregarAporte(form: FormData) {
   const goal_id = texto(form, "goal_id");
-  const volver = `/metas/${goal_id}`;
+  // Los aportes rápidos (desde Inicio o Metas) vuelven a la misma pantalla.
+  const rapido = texto(form, "volver");
+  const volver = /^\/(?!\/)[\w\-/?=&%.]*$/.test(rapido) ? rapido : `/metas/${goal_id}`;
   const valor = monto(form, "monto");
   if (!valor || !(valor > 0)) volverConError(volver, "Escribe el monto del aporte.");
   const fecha = texto(form, "fecha") || hoyChile();
@@ -105,7 +107,7 @@ export async function agregarAporte(form: FormData) {
   } catch (e) {
     volverConError(volver, `No se pudo guardar el aporte: ${(e as Error).message}`);
   }
-  redirect(volver);
+  redirect(rapido && volver === rapido ? `${volver}${volver.includes("?") ? "&" : "?"}aviso=aporte` : volver);
 }
 
 export async function eliminarAporte(form: FormData) {

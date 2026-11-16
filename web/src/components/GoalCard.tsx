@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AporteRapido } from "@/components/AporteRapido";
 import { formatCLP } from "@/lib/finanzas";
 import { periodoCorto, progreso, proyectar } from "@/lib/metas";
 import type { GoalFull } from "@/lib/types";
@@ -11,7 +12,9 @@ export function textoProyeccion(g: GoalFull, hoy: string): string {
   return `A ${formatCLP(g.aporte_mensual_plan!)}/mes llegas en ${periodoCorto(p.llegada)} (${p.mesesRestantes} ${p.mesesRestantes === 1 ? "mes" : "meses"})`;
 }
 
-export function GoalCard({ goal, hoy, compacta = false }: { goal: GoalFull; hoy: string; compacta?: boolean }) {
+export function GoalCard({
+  goal, hoy, compacta = false, volver = "/metas",
+}: { goal: GoalFull; hoy: string; compacta?: boolean; volver?: string }) {
   const pct = Math.round(progreso(goal) * 100);
   const p = proyectar(goal, hoy);
   const color = p.lograda ? "var(--h-ok)" : undefined;
@@ -34,10 +37,10 @@ export function GoalCard({ goal, hoy, compacta = false }: { goal: GoalFull; hoy:
         <span style={{ width: `${pct}%`, background: color }} />
       </div>
       <div className="h-muted">{textoProyeccion(goal, hoy)}</div>
-      {!compacta && (
-        <div className="h-row" style={{ marginTop: 12, justifyContent: "flex-start", flexWrap: "wrap" }}>
-          <Link className="h-btn" href={`/metas/${goal.id}#aporte`}>+ Aporte</Link>
-          {goal.usa_credito && <Link className="h-btn h-btn--ghost" href={`/metas/${goal.id}/credito`}>Ver crédito ›</Link>}
+      <AporteRapido goal={goal} volver={volver} />
+      {!compacta && goal.usa_credito && (
+        <div className="h-row" style={{ marginTop: 8, justifyContent: "flex-start" }}>
+          <Link className="h-btn h-btn--ghost" href={`/metas/${goal.id}/credito`}>Ver crédito ›</Link>
         </div>
       )}
     </section>

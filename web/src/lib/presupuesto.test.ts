@@ -52,10 +52,11 @@ test("proyección: libera cuotas al terminar la deuda y deja de aportar a metas 
   const r = proyectarLibre(1_000_000, { bills: [], providers: [luz], debts: [corta], goals: [g] }, "2026-11", "2026-11-15", 4);
   assert.deepEqual(r.map((m) => m.periodo), ["2026-11", "2026-12", "2027-01", "2027-02"]);
   assert.deepEqual(r.map((m) => m.cuotas), [50_000, 50_000, 0, 0]);
-  assert.deepEqual(r.map((m) => m.metas), [100_000, 100_000, 50_000, 0]);
-  assert.deepEqual(r.map((m) => m.libre), [810_000, 810_000, 910_000, 960_000]);
-  assert.equal(r[3].acumulado, 810_000 + 810_000 + 910_000 + 960_000);
-  assert.deepEqual(r[2].notas, ["termina Notebook", "logras Auto"]);
+  assert.deepEqual(r.map((m) => m.metas), [100_000, 100_000, 100_000, 50_000]);
+  assert.deepEqual(r.map((m) => m.libre), [810_000, 810_000, 860_000, 910_000]);
+  assert.equal(r[3].acumulado, 810_000 + 810_000 + 860_000 + 910_000);
+  assert.deepEqual(r[2].notas, ["termina Notebook"]);
+  assert.deepEqual(r[3].notas, ["logras Auto"]);
 });
 
 test("proyección: cobro anual solo en su mes", () => {

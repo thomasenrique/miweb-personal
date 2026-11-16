@@ -64,7 +64,8 @@ export function proyectarLibre(
   const actual = calcularPresupuesto(sueldo, datos, periodo, hoy);
   const metas = datos.goals
     .filter((g) => g.estado === "activa" && g.aporte_mensual_plan)
-    .map((g) => ({ g, plan: g.aporte_mensual_plan!, restante: Math.max(0, proyectar(g, hoy).restante - g.aporte_mensual_plan!) }));
+    .map((g) => ({ g, plan: g.aporte_mensual_plan!, restante: proyectar(g, hoy).restante }));
+  // Igual que la tarjeta de la meta: los aportes que faltan se cuentan desde el mes siguiente.
   const vigentes = datos.debts.filter((d) => !d.saldada);
 
   const out: MesProyectado[] = [{
