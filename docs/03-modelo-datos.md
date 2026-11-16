@@ -142,3 +142,5 @@ Una fila por usuario (`user_id` es la clave). Migración `0004_sueldo.sql`.
 | sueldo_liquido | integer, null | Sueldo líquido mensual fijo, en CLP |
 
 **Libre disponible** (`lib/presupuesto.ts`) = sueldo − cuentas del mes (registradas + estimado de las que faltan) − cuotas de deudas del mes − aporte mensual planificado de metas activas.
+
+**Proyección a 12 meses** (`proyectarLibre`): el mes actual usa el cálculo anterior; los siguientes usan el monto estimado de los proveedores que cobran ese mes (los anuales solo en su mes), las cuotas vigentes y el aporte a metas hasta completarlas. El acumulado suma el libre mes a mes.

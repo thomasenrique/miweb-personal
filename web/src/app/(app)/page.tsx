@@ -4,9 +4,9 @@ import { EstadoPill, Monto } from "@/components/ui";
 import { getBills, getDebts, getGoals, getProviders, getSueldo } from "@/lib/data";
 import { aPagarEnPeriodo, saldoRestante } from "@/lib/deudas";
 import {
-  calcularPendientes, formatCLP, hoyChile, periodoDe, textoVencimiento, totalPorGrupo, tituloPeriodo,
+  calcularPendientes, formatCLP, mesCorto, hoyChile, periodoDe, textoVencimiento, totalPorGrupo, tituloPeriodo,
 } from "@/lib/finanzas";
-import { calcularPresupuesto } from "@/lib/presupuesto";
+import { calcularPresupuesto, proyectarLibre } from "@/lib/presupuesto";
 
 export default async function InicioPage() {
   const hoy = hoyChile();
@@ -18,7 +18,9 @@ export default async function InicioPage() {
     getDebts().catch(() => []),
     getSueldo().catch(() => null),
   ]);
-  const pres = sueldo != null ? calcularPresupuesto(sueldo, { bills, providers, debts: deudas, goals }, mes, hoy) : null;
+  const datos = { bills, providers, debts: deudas, goals };
+  const pres = sueldo != null ? calcularPresupuesto(sueldo, datos, mes, hoy) : null;
+  const futuro = sueldo != null ? proyectarLibre(sueldo, datos, mes, hoy, 12) : [];
   const metas = goals.filter((g) => g.estado === "activa").slice(0, 3);
   const t = totalPorGrupo(bills);
   const pendientes = calcularPendientes(providers, bills, mes, hoy);
@@ -51,6 +53,34 @@ export default async function InicioPage() {
           <p style={{ margin: 0 }}>
             Ingresa tu sueldo para ver cuánto te queda libre cada mes. <Link href="/ajustes#sueldo">Agregar sueldo</Link>.
           </p>
+        </section>
+      )}
+
+      {futuro.length > 0 && (
+        <section className="h-card">
+          <h3>Próximos 12 meses</h3>
+          <p className="h-muted" style={{ margin: "0 0 8px" }}>
+            Estimado con tus montos de cuentas, cuotas vigentes y aportes a metas. El acumulado es lo que juntarías si ahorras todo lo libre.
+          </p>
+          <div className="h-table-wrap">
+            <table className="h-table">
+              <thead>
+                <tr><th>Mes</th><th>Libre del mes</th><th>Acumulado</th></tr>
+              </thead>
+              <tbody>
+                {futuro.map((m) => (
+                  <tr key={m.periodo}>
+                    <td>
+                      {mesCorto(m.periodo)}{m.periodo.slice(0, 4) !== mes.slice(0, 4) ? ` ${m.periodo.slice(2, 4)}` : ""}
+                      {m.notas.length > 0 && <small>{m.notas.join(" · ")}</small>}
+                    </td>
+                    <td className={m.libre < 0 ? "is-neg" : undefined}>{formatCLP(m.libre)}</td>
+                    <td className={m.acumulado < 0 ? "is-neg" : undefined}><b>{formatCLP(m.acumulado)}</b></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

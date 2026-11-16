@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { calcularPresupuesto } from "./presupuesto.ts";
+import { calcularPresupuesto, proyectarLibre } from "./presupuesto.ts";
 import type { BillFull, DebtFull, GoalFull, ProviderFull } from "./types.ts";
 
 const cat = { id: "c", nombre: "Luz", icono: "💡", grupo: "hogar" as const, es_suscripcion: false, orden: 1 };
@@ -44,4 +44,22 @@ test("libre negativo cuando no alcanza", () => {
   const p = calcularPresupuesto(100_000, { bills: [], providers: [luz], debts: [deuda], goals: [] }, "2026-11", "2026-11-15");
   assert.equal(p.libre, 100_000 - 40_000 - 90_000);
   assert.ok(p.usado > 1);
+});
+
+test("proyección: libera cuotas al terminar la deuda y deja de aportar a metas logradas", () => {
+  const corta: DebtFull = { ...deuda, id: "c", descripcion: "Notebook", n_cuotas: 2, valor_cuota: 50_000, primer_mes_pago: "2026-11" };
+  const g = { ...meta("activa", 100_000), meta_ahorro: 250_000 };
+  const r = proyectarLibre(1_000_000, { bills: [], providers: [luz], debts: [corta], goals: [g] }, "2026-11", "2026-11-15", 4);
+  assert.deepEqual(r.map((m) => m.periodo), ["2026-11", "2026-12", "2027-01", "2027-02"]);
+  assert.deepEqual(r.map((m) => m.cuotas), [50_000, 50_000, 0, 0]);
+  assert.deepEqual(r.map((m) => m.metas), [100_000, 100_000, 50_000, 0]);
+  assert.deepEqual(r.map((m) => m.libre), [810_000, 810_000, 910_000, 960_000]);
+  assert.equal(r[3].acumulado, 810_000 + 810_000 + 910_000 + 960_000);
+  assert.deepEqual(r[2].notas, ["termina Notebook", "logras Auto"]);
+});
+
+test("proyección: cobro anual solo en su mes", () => {
+  const anual: ProviderFull = { ...prov("dominio", 24_000), frecuencia: "anual", mes_cobro: 1 };
+  const r = proyectarLibre(500_000, { bills: [], providers: [anual], debts: [], goals: [] }, "2026-11", "2026-11-15", 3);
+  assert.deepEqual(r.map((m) => m.cuentas), [0, 0, 24_000]);
 });

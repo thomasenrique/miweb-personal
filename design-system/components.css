@@ -53,6 +53,16 @@ h1 { font-size: var(--h-fs-xl); } h2 { font-size: var(--h-fs-lg); } h3 { font-si
 .h-list { list-style: none; margin: 0; padding: 0; }
 .h-list li { display: flex; align-items: center; gap: var(--h-s3); padding: var(--h-s3) 0; border-bottom: 1px solid var(--h-border); }
 .h-list li:last-child { border-bottom: 0; }
+
+/* Tabla simple de montos */
+.h-table-wrap { overflow-x: auto; margin: 0 calc(-1 * var(--h-s2)); }
+.h-table { width: 100%; border-collapse: collapse; font-size: var(--h-fs-sm); }
+.h-table th, .h-table td { padding: var(--h-s2); text-align: right; border-bottom: 1px solid var(--h-border); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.h-table th:first-child, .h-table td:first-child { text-align: left; }
+.h-table th { font-weight: 500; color: var(--h-text-muted); }
+.h-table tr:last-child td { border-bottom: 0; }
+.h-table .is-neg { color: var(--h-bad-text); }
+.h-table small { display: block; color: var(--h-text-muted); font-size: var(--h-fs-xs); white-space: normal; }
 .h-list .h-grow { flex: 1; min-width: 0; }
 
 /* Icono en burbuja */
