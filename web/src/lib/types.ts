@@ -114,3 +114,19 @@ export type DebtFull = Debt & { card: Card | null };
 export type ProviderFull = Provider & { category: Category; card: Card | null };
 /** Cuenta con proveedor y categoría resueltos. */
 export type BillFull = Bill & { provider: ProviderFull };
+
+export type Habit = {
+  id: string;
+  nombre: string;
+  /** Emoji o ícono propio con prefijo "svg:" (svg:mancuerna). */
+  icono: string;
+  /** Token de color del sistema de diseño: --h-cat-1 … --h-cat-6. */
+  color: string;
+  /** Veces por semana; 0 = sin meta. */
+  meta_semanal: number;
+  orden: number;
+  archivado_at: string | null;
+};
+
+/** Un hábito cumplido en un día. */
+export type HabitMark = { id: string; habit_id: string; fecha: string };

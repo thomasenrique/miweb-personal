@@ -9,6 +9,7 @@ const ITEMS = [
   { href: "/cuentas", icono: "▤", texto: "Cuentas" },
   { href: "/deudas", icono: "▭", texto: "Deudas" },
   { href: "/metas", icono: "◎", texto: "Metas" },
+  { href: "/habitos", icono: "✦", texto: "Hábitos" },
   { href: "/ajustes", icono: "⚙", texto: "Ajustes" },
 ];
 

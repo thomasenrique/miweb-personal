@@ -4,7 +4,7 @@ import { demo } from "./demo";
 import { cargosAutomaticos } from "./finanzas";
 import { crearSupabase, supabaseConfigurado } from "./supabase/server";
 import type {
-  Bill, BillFull, Card, Category, Contribution, Debt, DebtFull, Goal, GoalFull, Provider, ProviderFull,
+  Bill, BillFull, Card, Category, Contribution, Debt, DebtFull, Goal, GoalFull, Habit, HabitMark, Provider, ProviderFull,
 } from "./types";
 
 export const modoDemo = !supabaseConfigurado;
@@ -402,4 +402,64 @@ export async function saveSueldo(sueldo: number | null) {
   if (modoDemo) return void (demo.sueldo = sueldo);
   const sb = await crearSupabase();
   falla((await sb.from("settings").upsert({ sueldo_liquido: sueldo, updated_at: new Date().toISOString() })).error);
+}
+
+// ——— Hábitos ———
+
+export type HabitInput = Omit<Habit, "id" | "archivado_at" | "orden">;
+
+/** Todos los hábitos, también los archivados (sus marcas siguen en el calendario). */
+export async function getHabits(): Promise<Habit[]> {
+  if (modoDemo) return demo.habits.map((h) => ({ ...h }));
+  const sb = await crearSupabase();
+  const { data, error } = await sb.from("habits").select("id, nombre, icono, color, meta_semanal, orden, archivado_at");
+  falla(error);
+  return data as Habit[];
+}
+
+export async function getHabitMarks(desde: string, hasta: string): Promise<HabitMark[]> {
+  if (modoDemo) return demo.habitMarks.filter((m) => m.fecha >= desde && m.fecha <= hasta);
+  const sb = await crearSupabase();
+  const { data, error } = await sb.from("habit_marks").select("id, habit_id, fecha").gte("fecha", desde).lte("fecha", hasta);
+  falla(error);
+  return data as HabitMark[];
+}
+
+export async function saveHabit(id: string | null, input: HabitInput) {
+  if (modoDemo) {
+    const h = id && demo.habits.find((x) => x.id === id);
+    if (h) Object.assign(h, input);
+    else demo.habits.push({ ...input, id: crypto.randomUUID(), orden: demo.habits.length + 1, archivado_at: null });
+    return;
+  }
+  const sb = await crearSupabase();
+  if (id) return falla((await sb.from("habits").update(input).eq("id", id)).error);
+  const { count } = await sb.from("habits").select("id", { count: "exact", head: true });
+  falla((await sb.from("habits").insert({ ...input, orden: (count ?? 0) + 1 })).error);
+}
+
+export async function archiveHabit(id: string) {
+  const ahora = new Date().toISOString();
+  if (modoDemo) {
+    const h = demo.habits.find((x) => x.id === id);
+    if (h) h.archivado_at = ahora;
+    return;
+  }
+  const sb = await crearSupabase();
+  falla((await sb.from("habits").update({ archivado_at: ahora }).eq("id", id)).error);
+}
+
+/** Marca o desmarca un hábito en un día (idempotente). */
+export async function setHabitMark(habit_id: string, fecha: string, hecho: boolean) {
+  if (modoDemo) {
+    demo.habitMarks = demo.habitMarks.filter((m) => !(m.habit_id === habit_id && m.fecha === fecha));
+    if (hecho) demo.habitMarks.push({ id: crypto.randomUUID(), habit_id, fecha });
+    return;
+  }
+  const sb = await crearSupabase();
+  if (hecho) {
+    falla((await sb.from("habit_marks").upsert({ habit_id, fecha }, { onConflict: "habit_id,fecha", ignoreDuplicates: true })).error);
+  } else {
+    falla((await sb.from("habit_marks").delete().eq("habit_id", habit_id).eq("fecha", fecha)).error);
+  }
 }

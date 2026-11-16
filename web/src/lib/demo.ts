@@ -1,7 +1,8 @@
 // Datos de ejemplo en memoria para usar la app sin Supabase (se pierden al reiniciar el servidor).
 import "server-only";
 import { addMeses, fechaVencimiento, hoyChile, periodoDe } from "./finanzas";
-import type { Bill, Card, Category, Contribution, Debt, Goal, Provider } from "./types";
+import { sumarDias } from "./habitos";
+import type { Bill, Card, Category, Contribution, Debt, Goal, Habit, HabitMark, Provider } from "./types";
 
 const cat = (id: string, nombre: string, icono: string, grupo: Category["grupo"], orden: number, es_suscripcion = false): Category =>
   ({ id, nombre, icono, grupo, orden, es_suscripcion });
@@ -111,6 +112,32 @@ function generarDeudas(): { cards: Card[]; debts: Debt[] } {
   return { cards, debts };
 }
 
+/** Hábitos de ejemplo con unas 6 semanas de historial creíble hasta ayer. */
+function generarHabitos(): { habits: Habit[]; habitMarks: HabitMark[] } {
+  const h = (id: string, nombre: string, icono: string, color: string, meta_semanal: number, orden: number): Habit =>
+    ({ id, nombre, icono, color, meta_semanal, orden, archivado_at: null });
+  const habits = [
+    h("gym", "Gimnasio", "svg:mancuerna", "--h-cat-3", 3, 1),
+    h("kick", "Kickboxing", "🥊", "--h-cat-1", 2, 2),
+    h("aseo", "Aseo casa", "🧹", "--h-cat-2", 2, 3),
+    h("leer", "Leer 20 min", "📚", "--h-cat-5", 0, 4),
+  ];
+  const habitMarks: HabitMark[] = [];
+  const hoy = hoyChile();
+  for (let i = 45; i >= 1; i--) {
+    const f = sumarDias(hoy, -i);
+    const n = Number(f.slice(8, 10));
+    const dw = new Date(`${f}T12:00:00Z`).getUTCDay();
+    const ids: string[] = [];
+    if ([1, 3, 5].includes(dw) && n % 11 !== 0) ids.push("gym");
+    if ([2, 4].includes(dw) && n !== 13) ids.push("kick");
+    if (dw === 6 || n % 9 === 0) ids.push("aseo");
+    if ((n * 7) % 3 !== 0 || ids.length === 0) ids.push("leer");
+    for (const habit_id of ids) habitMarks.push({ id: crypto.randomUUID(), habit_id, fecha: f });
+  }
+  return { habits, habitMarks };
+}
+
 type Store = {
   categories: Category[];
   providers: Provider[];
@@ -120,6 +147,8 @@ type Store = {
   cards: Card[];
   debts: Debt[];
   sueldo: number | null;
+  habits: Habit[];
+  habitMarks: HabitMark[];
 };
 
 // Un solo store por proceso (sobrevive a recargas en desarrollo).
@@ -127,5 +156,6 @@ const g = globalThis as unknown as { __demoStore?: Store };
 if (g.__demoStore && !g.__demoStore.goals) Object.assign(g.__demoStore, generarMetas());
 if (g.__demoStore && !g.__demoStore.cards) Object.assign(g.__demoStore, generarDeudas());
 if (g.__demoStore) for (const pr of g.__demoStore.providers) pr.monto_variable ??= ["luz", "agua", "gas"].includes(pr.category_id);
+if (g.__demoStore && !g.__demoStore.habits) Object.assign(g.__demoStore, generarHabitos());
 if (g.__demoStore && g.__demoStore.sueldo === undefined) g.__demoStore.sueldo = 1_650_000;
-export const demo: Store = (g.__demoStore ??= { categories, providers, bills: generarCuentas(), ...generarMetas(), ...generarDeudas(), sueldo: 1_650_000 });
+export const demo: Store = (g.__demoStore ??= { categories, providers, bills: generarCuentas(), ...generarMetas(), ...generarDeudas(), ...generarHabitos(), sueldo: 1_650_000 });
