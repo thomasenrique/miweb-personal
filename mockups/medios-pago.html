@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Medios de pago · Mi vida</title>
+<link rel="stylesheet" href="../design-system/tokens.css"><link rel="stylesheet" href="../design-system/components.css">
+</head><body>
+<main class="h-page h-stack">
+  <h1>Ajustes</h1>
+  <p class="h-muted">A · Nueva sección en Ajustes, debajo de Sueldo</p>
+
+  <h2>💳 Medios de pago</h2>
+  <div class="h-grid">
+    <section class="h-card h-stack">
+      <div class="h-row"><b>Cuenta RUT ••1234</b><span class="h-pill h-pill--ok">Débito</span></div>
+      <div class="h-metric__label">Carga mensual necesaria</div>
+      <div class="h-metric__value">$61.344</div>
+      <div class="h-muted">5 suscripciones · próximo cobro: Spotify día 12 ($8.250)</div>
+      <ul class="h-list">
+        <li><span class="h-grow">Anthropic <span class="h-muted">· USD 20 · día 5</span></span><span class="h-num">$19.954</span></li>
+        <li><span class="h-grow">Spotify <span class="h-muted">· día 12</span></span><span class="h-num">$8.250</span></li>
+        <li><span class="h-grow">YouTube <span class="h-muted">· día 26</span></span><span class="h-num">$11.000</span></li>
+        <li class="h-muted"><span class="h-grow">+ 2 más</span></li>
+      </ul>
+    </section>
+    <section class="h-card h-stack">
+      <div class="h-row"><b>Visa BCI ••4821</b><span class="h-pill h-pill--accent">Crédito</span></div>
+      <div class="h-metric__label">Cargos automáticos al mes</div>
+      <div class="h-metric__value">$16.151</div>
+      <div class="h-muted">Se suman al estado de cuenta (factura día 20, pagas día 5)</div>
+      <ul class="h-list">
+        <li><span class="h-grow">Crunchyroll <span class="h-muted">· día 14</span></span><span class="h-num">$5.490</span></li>
+        <li><span class="h-grow">iCloud</span><span class="h-num">$10.661</span></li>
+      </ul>
+    </section>
+  </div>
+  <div class="h-alert">⚠️ <span><b>3 sin medio de pago:</b> Nintendo Online, Claro Movil Rut, Itaú CAE</span></div>
+
+  <p class="h-muted" style="margin-top:32px">B · Lista de proveedores: se agrega la tarjeta</p>
+  <section class="h-card"><ul class="h-list">
+    <li><span class="h-ico">🔁</span><span class="h-grow"><b>Anthropic</b><br><span class="h-muted">Suscripciones · día 5 · 💳 Cuenta RUT</span></span><span class="h-num">$19.954</span></li>
+    <li><span class="h-ico">🔁</span><span class="h-grow"><b>Crunchyroll</b><br><span class="h-muted">Suscripciones · día 14 · 💳 Visa BCI · auto</span></span><span class="h-num">$5.490</span></li>
+  </ul></section>
+
+  <p class="h-muted" style="margin-top:32px">C · Formulario del proveedor: campo nuevo</p>
+  <section class="h-card h-stack">
+    <div class="h-field"><label>Se paga con</label>
+      <select class="h-input"><option>— Pago manual / transferencia</option><option selected>Visa BCI ••4821 (crédito)</option><option>Cuenta RUT ••1234 (débito)</option></select>
+    </div>
+    <p class="h-muted" style="margin:0">Con tarjeta de crédito, cada mes se marca pagado solo el día de cobro y se suma a la facturación de la tarjeta.</p>
+  </section>
+</main>
+</body></html>

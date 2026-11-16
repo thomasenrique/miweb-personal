@@ -25,3 +25,13 @@ select.h-input { appearance: auto; }
 /* Formulario de meta: los campos de crédito solo se ven si el checkbox está marcado */
 .h-credito:has(input[name="usa_credito"]:not(:checked)) .h-credito-campos { display: none; }
 .h-credito:has(input[name="usa_credito"]:checked) .h-credito-off { display: none; }
+.h-tarjeta:has(input[name="tipo"][value="debito"]:checked) .h-solo-credito { display: none; }
+.h-tarjeta:has(input[name="tipo"][value="credito"]:checked) .h-solo-debito { display: none; }
+.h-seg--radio label { flex: 1; display: grid; place-items: center; min-height: 36px; border-radius: var(--h-r-pill); color: var(--h-text-2); font-size: var(--h-fs-sm); cursor: pointer; }
+.h-seg--radio input { position: absolute; opacity: 0; pointer-events: none; }
+.h-seg--radio label:has(input:checked) { background: var(--h-surface); color: var(--h-text); font-weight: var(--h-fw-bold); box-shadow: var(--h-shadow); }
+.h-seg--radio label:has(input:focus-visible) { outline: 3px solid var(--h-accent-soft); }
+.h-solo-sub { display: none; }
+.h-tarjeta-grupo + .h-tarjeta-grupo { margin-top: var(--h-s4); }
+.h-tarjeta-cab { padding: var(--h-s2) var(--h-s3); margin-top: var(--h-s2); border-radius: var(--h-r-md); background: var(--h-surface-2); }
+form:has(#category_id option[data-sub]:checked) .h-solo-sub { display: grid; }

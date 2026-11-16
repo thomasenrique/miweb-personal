@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
-  createBill, createProvider, saveSueldo, deleteBill, deleteProvider, getProvider, modoDemo,
+  createBill, createProvider, saveSueldo, deleteBill, deleteProvider, getCard, getCategories, getProvider, modoDemo,
   updateBill, updateProvider, type BillInput, type ProviderInput,
 } from "@/lib/data";
 import { dolarDelDia } from "@/lib/dolar";
@@ -147,9 +147,18 @@ export async function guardarProveedor(form: FormData) {
   const monto_estimado = montoTxt ? parseMonto(montoTxt) : null;
   if (monto_estimado !== null && Number.isNaN(monto_estimado)) volverConError(volver, "Monto estimado no válido.");
 
+  // La tarjeta solo aplica a suscripciones.
+  const categoria = (await getCategories()).find((c) => c.id === category_id);
+  let card_id: string | null = null;
+  if (categoria?.es_suscripcion && texto(form, "card_id")) {
+    card_id = texto(form, "card_id");
+    if (!(await getCard(card_id))) volverConError(volver, "Esa tarjeta no existe.");
+  }
+
   const input: ProviderInput = {
     nombre,
     category_id,
+    card_id,
     numero_cliente: texto(form, "numero_cliente") || null,
     dia_vencimiento,
     frecuencia,

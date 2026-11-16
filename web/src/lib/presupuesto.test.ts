@@ -6,7 +6,7 @@ import type { BillFull, DebtFull, GoalFull, ProviderFull } from "./types.ts";
 const cat = { id: "c", nombre: "Luz", icono: "💡", grupo: "hogar" as const, es_suscripcion: false, orden: 1 };
 const prov = (id: string, monto: number): ProviderFull => ({
   id, nombre: id, category_id: "c", numero_cliente: null, dia_vencimiento: 20, frecuencia: "mensual",
-  mes_cobro: null, moneda: "CLP", monto_estimado: monto, activo: true, category: cat,
+  mes_cobro: null, moneda: "CLP", monto_estimado: monto, activo: true, card_id: null, category: cat, card: null,
 });
 const luz = prov("luz", 40_000);
 const agua = prov("agua", 15_000);

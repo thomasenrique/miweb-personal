@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Barras, Encabezado, Monto } from "@/components/ui";
-import { getCards, getDebts } from "@/lib/data";
+import { getCards, getDebts, getProviders } from "@/lib/data";
 import {
   aPagarEnPeriodo, cuotaDelPeriodo, cuotasPagadas, filtrarDeudasGrupo, proyeccion, resumenTarjeta,
   saldoRestante, terminada,
@@ -59,9 +59,13 @@ export default async function DeudasPage({ searchParams }: PageProps<"/deudas">)
   const hoy = hoyChile();
   const actual = periodoDe(hoy);
 
-  let cards, todas;
+  let cards, todas, providers;
   try {
-    [cards, todas] = await Promise.all([getCards(), getDebts()]);
+    [cards, todas, providers] = await Promise.all([
+      getCards().then((cs) => cs.filter((c) => c.tipo === "credito")),
+      getDebts(),
+      getProviders(),
+    ]);
   } catch {
     return (
       <>
@@ -118,7 +122,7 @@ export default async function DeudasPage({ searchParams }: PageProps<"/deudas">)
           ) : (
             <ul className="h-list">
               {cards.map((c) => {
-                const r = resumenTarjeta(c, todas, hoy);
+                const r = resumenTarjeta(c, todas, hoy, providers);
                 return (
                   <li key={c.id} style={c.activa ? { display: "block" } : { display: "block", opacity: 0.55 }}>
                     <Link href={`/deudas/tarjeta/${c.id}`} className="h-link-row" style={{ display: "block" }}>
@@ -135,6 +139,11 @@ export default async function DeudasPage({ searchParams }: PageProps<"/deudas">)
                       <div className="h-muted">
                         Próximo pago: <b style={{ color: "var(--h-text)" }}>{formatCLP(r.montoProximo)}</b> · factura día {c.dia_facturacion}
                       </div>
+                      {r.suscripcionesProximo > 0 && (
+                        <div className="h-muted">
+                          Cuotas {formatCLP(r.cuotasProximo)} + suscripciones {formatCLP(r.suscripcionesProximo)}
+                        </div>
+                      )}
                     </Link>
                   </li>
                 );

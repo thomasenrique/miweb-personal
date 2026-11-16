@@ -1,5 +1,5 @@
 // Lógica pura (sin dependencias de Next ni Supabase) para poder probarla con `node --test`.
-import type { Bill, BillFull, Grupo, ProviderFull } from "./types.ts";
+import type { Bill, BillFull, Card, Grupo, ProviderFull } from "./types.ts";
 
 const ZONA = "America/Santiago";
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -215,4 +215,92 @@ export function filtrarGrupo<T extends { provider: ProviderFull } | ProviderFull
     const p: ProviderFull = "provider" in i ? i.provider : (i as ProviderFull);
     return p.category.grupo === grupo;
   });
+}
+
+// ——— Medios de pago de las suscripciones ———
+
+/** ¿La suscripción se cobra sola en una tarjeta de crédito? */
+export function esCargoCredito(p: ProviderFull): boolean {
+  return p.category.es_suscripcion && p.card?.tipo === "credito";
+}
+
+/** Fecha de cobro en el periodo (sin día de cobro se asume el 1). */
+export function fechaCobro(p: ProviderFull, periodo: string): string {
+  return fechaVencimiento(periodo, p.dia_vencimiento ?? 1);
+}
+
+/**
+ * Cuentas que hay que registrar solas: suscripciones activas cobradas a tarjeta de crédito
+ * cuyo día de cobro ya llegó en el periodo y que todavía no tienen cuenta ese mes.
+ */
+export function cargosAutomaticos(
+  providers: ProviderFull[],
+  bills: BillFull[],
+  periodo: string,
+  hoy: string,
+): Omit<Bill, "id">[] {
+  const conCuenta = new Set(bills.filter((b) => b.periodo === periodo).map((b) => b.provider_id));
+  const out: Omit<Bill, "id">[] = [];
+  for (const p of providers) {
+    if (!esCargoCredito(p) || !cobraEnPeriodo(p, periodo) || conCuenta.has(p.id)) continue;
+    if (!p.monto_estimado || p.monto_estimado <= 0) continue;
+    const fecha = fechaCobro(p, periodo);
+    if (fecha > hoy) continue;
+    out.push({
+      provider_id: p.id,
+      monto: Math.round(p.monto_estimado),
+      moneda_original: "CLP",
+      monto_original: null,
+      tipo_cambio: null,
+      fecha_pago: fecha,
+      periodo,
+      fecha_vencimiento: fecha,
+      estado: "pagado",
+      fuente: "manual",
+      notas: `Cargo automático a ${p.card!.nombre}`,
+    });
+  }
+  return out;
+}
+
+export type GrupoTarjeta = {
+  /** null = sin tarjeta asignada. */
+  card: Card | null;
+  items: ProviderFull[];
+  /** Lo que se cobra en un mes normal (las anuales prorrateadas). */
+  mensual: number;
+  /** Próximo cobro desde hoy (incluye hoy). */
+  proximo: { provider: ProviderFull; fecha: string } | null;
+};
+
+/** Próxima fecha de cobro de la suscripción desde hoy, mirando hasta 12 meses. */
+export function proximoCobro(p: ProviderFull, hoy: string): string | null {
+  if (!p.activo) return null;
+  const actual = periodoDe(hoy);
+  for (let i = 0; i <= 12; i++) {
+    const per = addMeses(actual, i);
+    if (!cobraEnPeriodo(p, per)) continue;
+    const f = fechaCobro(p, per);
+    if (f >= hoy) return f;
+  }
+  return null;
+}
+
+/**
+ * Agrupa las suscripciones por la tarjeta con que se cobran.
+ * Orden: débito, crédito, y al final las sin tarjeta.
+ */
+export function agruparPorTarjeta(subs: ProviderFull[], hoy: string): GrupoTarjeta[] {
+  const m = new Map<string, GrupoTarjeta>();
+  for (const p of subs) {
+    const key = p.card?.id ?? "";
+    const g = m.get(key) ?? { card: p.card, items: [], mensual: 0, proximo: null };
+    g.items.push(p);
+    if (p.activo) g.mensual += costoMensual(p);
+    const f = proximoCobro(p, hoy);
+    if (f && (!g.proximo || f < g.proximo.fecha)) g.proximo = { provider: p, fecha: f };
+    m.set(key, g);
+  }
+  const rango = (g: GrupoTarjeta) => (g.card == null ? 2 : g.card.tipo === "debito" ? 0 : 1);
+  return [...m.values()].sort((a, b) => rango(a) - rango(b) || (a.card?.nombre ?? "").localeCompare(b.card?.nombre ?? ""));
 }

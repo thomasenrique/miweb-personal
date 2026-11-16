@@ -24,6 +24,8 @@ export type Provider = {
   moneda: Moneda;
   monto_estimado: number | null;
   activo: boolean;
+  /** Tarjeta con que se cobra (solo suscripciones). null = pago manual. */
+  card_id: string | null;
 };
 
 export type Bill = {
@@ -69,13 +71,18 @@ export type Contribution = {
 
 export type GoalFull = Goal & { contributions: Contribution[] };
 
+export type TipoTarjeta = "credito" | "debito";
+
 export type Card = {
   id: string;
   nombre: string;
+  tipo: TipoTarjeta;
   ultimos4: string | null;
   cupo: number | null;
-  dia_facturacion: number;
-  dia_pago: number;
+  /** Solo crédito (null en débito). */
+  dia_facturacion: number | null;
+  /** Solo crédito (null en débito). */
+  dia_pago: number | null;
   activa: boolean;
 };
 
@@ -102,6 +109,6 @@ export type Debt = {
 export type DebtFull = Debt & { card: Card | null };
 
 /** Proveedor con su categoría ya resuelta. */
-export type ProviderFull = Provider & { category: Category };
+export type ProviderFull = Provider & { category: Category; card: Card | null };
 /** Cuenta con proveedor y categoría resueltos. */
 export type BillFull = Bill & { provider: ProviderFull };

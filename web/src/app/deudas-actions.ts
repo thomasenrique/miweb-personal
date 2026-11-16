@@ -6,7 +6,7 @@ import {
 } from "@/lib/data";
 import { primerMesPagoTarjeta } from "@/lib/deudas";
 import { esPeriodo, hoyChile, parseMonto } from "@/lib/finanzas";
-import type { Grupo, TipoDeuda } from "@/lib/types";
+import type { Grupo, TipoDeuda, TipoTarjeta } from "@/lib/types";
 
 const texto = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const monto = (f: FormData, k: string) => {
@@ -26,7 +26,8 @@ function volverConError(ruta: string, msg: string): never {
 
 export async function guardarTarjeta(form: FormData) {
   const id = texto(form, "id") || null;
-  const volver = `/deudas/tarjeta/${id ?? "nueva"}`;
+  const tipo: TipoTarjeta = texto(form, "tipo") === "debito" ? "debito" : "credito";
+  const volver = `/deudas/tarjeta/${id ?? "nueva"}${id ? "" : `?tipo=${tipo}`}`;
 
   const nombre = texto(form, "nombre");
   if (!nombre) volverConError(volver, "Ponle un nombre a la tarjeta, por ejemplo Visa BCI.");
@@ -34,14 +35,16 @@ export async function guardarTarjeta(form: FormData) {
   if (ultimos4 && !/^\d{4}$/.test(ultimos4)) volverConError(volver, "Escribe solo los últimos 4 dígitos.");
   const cupo = monto(form, "cupo");
   if (cupo !== null && Number.isNaN(cupo)) volverConError(volver, "Cupo no válido.");
-  const dia_facturacion = dia(form, "dia_facturacion");
-  const dia_pago = dia(form, "dia_pago");
-  if (!dia_facturacion || !dia_pago) volverConError(volver, "Los días de facturación y pago van del 1 al 31.");
+  const credito = tipo === "credito";
+  const dia_facturacion = credito ? dia(form, "dia_facturacion") : null;
+  const dia_pago = credito ? dia(form, "dia_pago") : null;
+  if (credito && (!dia_facturacion || !dia_pago)) volverConError(volver, "Los días de facturación y pago van del 1 al 31.");
 
   const input: CardInput = {
     nombre,
+    tipo,
     ultimos4,
-    cupo: cupo === null ? null : Math.round(cupo),
+    cupo: !credito || cupo === null ? null : Math.round(cupo),
     dia_facturacion,
     dia_pago,
     activa: form.get("activa") === "on",
@@ -51,18 +54,19 @@ export async function guardarTarjeta(form: FormData) {
   } catch (e) {
     volverConError(volver, `No se pudo guardar: ${(e as Error).message}`);
   }
-  redirect("/deudas");
+  redirect(credito ? "/deudas" : "/ajustes#medios");
 }
 
 export async function eliminarTarjeta(form: FormData) {
   const id = texto(form, "id");
+  const debito = (await getCard(id))?.tipo === "debito";
   let r: string;
   try {
     r = await deleteCard(id);
   } catch (e) {
     volverConError(`/deudas/tarjeta/${id}`, `No se pudo eliminar: ${(e as Error).message}`);
   }
-  redirect(`/deudas?aviso=tarjeta-${r}`);
+  redirect(`${debito ? "/ajustes" : "/deudas"}?aviso=tarjeta-${r}`);
 }
 
 // ——— Compras en cuotas y créditos ———
@@ -97,7 +101,9 @@ export async function guardarDeuda(form: FormData) {
   if (tipo === "compra") {
     card_id = texto(form, "card_id");
     const card = card_id ? await getCard(card_id) : null;
-    if (!card) volverConError(volver, "Elige la tarjeta.");
+    if (!card || card.tipo !== "credito" || card.dia_facturacion == null || card.dia_pago == null) {
+      volverConError(volver, "Elige una tarjeta de crédito.");
+    }
     if (!esPeriodo(primer)) primer = primerMesPagoTarjeta(fecha, card.dia_facturacion, card.dia_pago);
   } else {
     institucion = texto(form, "institucion") || null;

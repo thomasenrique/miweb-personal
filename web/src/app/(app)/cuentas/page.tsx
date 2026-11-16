@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Barras, EstadoPill, Monto } from "@/components/ui";
 import { AlertaVencimientos, FilaPendiente } from "@/components/Pendientes";
-import { getBills, getProviders } from "@/lib/data";
+import { getBills, getProviders, registrarCargosAutomaticos } from "@/lib/data";
 import {
   addMeses, alertasVencimiento, calcularPendientes, esPeriodo, fechaCorta, filtrarGrupo, formatCLP, hoyChile,
   mesCorto, periodoDe, resumenSuscripciones, totalPorCategoria,
@@ -28,6 +28,7 @@ export default async function CuentasPage({ searchParams }: PageProps<"/cuentas"
     `/cuentas?mes=${o.mes ?? mes}${(o.grupo ?? grupo) !== "todo" ? `&grupo=${o.grupo ?? grupo}` : ""}`;
 
   const periodos = ultimosPeriodos(mes, 6);
+  await registrarCargosAutomaticos(actual, hoy).catch(() => {});
   const [todasCuentas, todosProv] = await Promise.all([getBills(periodos), getProviders()]);
   const cuentas = filtrarGrupo(todasCuentas, grupo);
   const delMes = cuentas.filter((b) => b.periodo === mes);

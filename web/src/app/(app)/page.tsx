@@ -2,7 +2,7 @@ import Link from "next/link";
 import { GoalCard } from "@/components/GoalCard";
 import { AlertaVencimientos, FilaPendiente } from "@/components/Pendientes";
 import { EstadoPill, Monto } from "@/components/ui";
-import { getBills, getDebts, getGoals, getProviders, getSueldo } from "@/lib/data";
+import { getBills, getDebts, getGoals, getProviders, getSueldo, registrarCargosAutomaticos } from "@/lib/data";
 import { aPagarEnPeriodo, saldoRestante } from "@/lib/deudas";
 import {
   alertasVencimiento, calcularPendientes, formatCLP, hoyChile, mesCorto, periodoDe, totalPorGrupo, tituloPeriodo,
@@ -13,6 +13,7 @@ export default async function InicioPage({ searchParams }: PageProps<"/">) {
   const { aviso } = await searchParams;
   const hoy = hoyChile();
   const mes = periodoDe(hoy);
+  await registrarCargosAutomaticos(mes, hoy).catch(() => {});
   const [bills, providers, goals, deudas, sueldo] = await Promise.all([
     getBills([mes]),
     getProviders(),

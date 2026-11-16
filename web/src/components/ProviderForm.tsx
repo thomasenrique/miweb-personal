@@ -1,11 +1,13 @@
+import Link from "next/link";
 import { eliminarProveedor, guardarProveedor } from "@/app/actions";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { MoneyInput } from "@/components/MoneyInput";
-import type { Category, ProviderFull } from "@/lib/types";
+import type { Card, Category, ProviderFull } from "@/lib/types";
 
 const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-export function ProviderForm({ categories, provider }: { categories: Category[]; provider?: ProviderFull | null }) {
+export function ProviderForm({ categories, cards, provider }: { categories: Category[]; cards: Card[]; provider?: ProviderFull | null }) {
+  const tarjetas = cards.filter((c) => c.activa || c.id === provider?.card_id);
   return (
     <>
       <form action={guardarProveedor} className="h-card h-stack">
@@ -21,10 +23,14 @@ export function ProviderForm({ categories, provider }: { categories: Category[];
           <select className="h-input" id="category_id" name="category_id" defaultValue={provider?.category_id ?? ""} required>
             <option value="" disabled>Elige una categoría</option>
             <optgroup label="Hogar">
-              {categories.filter((c) => c.grupo === "hogar").map((c) => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
+              {categories.filter((c) => c.grupo === "hogar").map((c) => (
+                <option key={c.id} value={c.id} data-sub={c.es_suscripcion ? "" : undefined}>{c.icono} {c.nombre}</option>
+              ))}
             </optgroup>
             <optgroup label="Personal">
-              {categories.filter((c) => c.grupo === "personal").map((c) => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
+              {categories.filter((c) => c.grupo === "personal").map((c) => (
+                <option key={c.id} value={c.id} data-sub={c.es_suscripcion ? "" : undefined}>{c.icono} {c.nombre}</option>
+              ))}
             </optgroup>
           </select>
         </div>
@@ -62,6 +68,22 @@ export function ProviderForm({ categories, provider }: { categories: Category[];
               <option value="USD">Dólares (USD)</option>
             </select>
           </div>
+        </div>
+
+        <div className="h-field h-solo-sub">
+          <label htmlFor="card_id">Se paga con</label>
+          <select className="h-input" id="card_id" name="card_id" defaultValue={provider?.card_id ?? ""}>
+            <option value="">Pago manual / transferencia</option>
+            {tarjetas.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}{c.ultimos4 ? ` ··${c.ultimos4}` : ""} ({c.tipo === "credito" ? "crédito" : "débito"})
+              </option>
+            ))}
+          </select>
+          <span className="h-muted">
+            Con tarjeta de crédito se marca pagada sola el día de cobro y se suma al pago de la tarjeta.
+            {" "}<Link href="/deudas/tarjeta/nueva?tipo=debito">+ Agregar tarjeta de débito</Link>
+          </span>
         </div>
 
         <div className="h-field">

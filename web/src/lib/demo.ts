@@ -19,7 +19,7 @@ const categories: Category[] = [
 
 const p = (id: string, nombre: string, category_id: string, dia: number, monto: number, extra: Partial<Provider> = {}): Provider => ({
   id, nombre, category_id, numero_cliente: null, dia_vencimiento: dia, frecuencia: "mensual",
-  mes_cobro: null, moneda: "CLP", monto_estimado: monto, activo: true, ...extra,
+  mes_cobro: null, moneda: "CLP", monto_estimado: monto, activo: true, card_id: null, ...extra,
 });
 
 const providers: Provider[] = [
@@ -29,9 +29,10 @@ const providers: Provider[] = [
   p("movistar", "Movistar Hogar", "internet", 8, 24990),
   p("entel", "Entel", "internet", 15, 28230),
   p("edificio", "Edificio", "comunes", 10, 89000),
-  p("claude", "Claude", "subs", 12, 19000, { moneda: "USD" }),
-  p("youtube", "YouTube Premium", "subs", 7, 4150),
-  p("spotify", "Spotify", "subs", 3, 5850),
+  p("claude", "Claude", "subs", 12, 19000, { moneda: "USD", card_id: "rut" }),
+  p("youtube", "YouTube Premium", "subs", 7, 4150, { card_id: "visa" }),
+  p("spotify", "Spotify", "subs", 3, 5850, { card_id: "rut" }),
+  p("icloud", "iCloud", "subs", 20, 2900),
 ];
 
 function generarCuentas(): Bill[] {
@@ -90,8 +91,9 @@ function generarMetas(): { goals: Goal[]; contributions: Contribution[] } {
 function generarDeudas(): { cards: Card[]; debts: Debt[] } {
   const actual = periodoDe(hoyChile());
   const cards: Card[] = [
-    { id: "visa", nombre: "Visa BCI", ultimos4: "4821", cupo: 3_000_000, dia_facturacion: 20, dia_pago: 5, activa: true },
-    { id: "master", nombre: "Master Santander", ultimos4: "1093", cupo: 2_000_000, dia_facturacion: 25, dia_pago: 10, activa: true },
+    { id: "visa", nombre: "Visa BCI", tipo: "credito", ultimos4: "4821", cupo: 3_000_000, dia_facturacion: 20, dia_pago: 5, activa: true },
+    { id: "master", nombre: "Master Santander", tipo: "credito", ultimos4: "1093", cupo: 2_000_000, dia_facturacion: 25, dia_pago: 10, activa: true },
+    { id: "rut", nombre: "Cuenta RUT", tipo: "debito", ultimos4: "1234", cupo: null, dia_facturacion: null, dia_pago: null, activa: true },
   ];
   const d = (o: Partial<Debt> & Pick<Debt, "id" | "descripcion" | "monto_total" | "n_cuotas" | "valor_cuota" | "primer_mes_pago">): Debt => ({
     tipo: "compra", card_id: "visa", institucion: null, grupo: "hogar", fecha: `${addMeses(o.primer_mes_pago, -1)}-15`,

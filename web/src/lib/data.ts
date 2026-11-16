@@ -1,6 +1,7 @@
 // Capa de acceso a datos: Supabase si está configurado, si no, datos de ejemplo en memoria.
 import "server-only";
 import { demo } from "./demo";
+import { cargosAutomaticos } from "./finanzas";
 import { crearSupabase, supabaseConfigurado } from "./supabase/server";
 import type {
   Bill, BillFull, Card, Category, Contribution, Debt, DebtFull, Goal, GoalFull, Provider, ProviderFull,
@@ -11,7 +12,7 @@ export const modoDemo = !supabaseConfigurado;
 export type BillInput = Omit<Bill, "id">;
 export type ProviderInput = Omit<Provider, "id">;
 
-const SELECT_PROVIDER = "*, category:categories(*)";
+const SELECT_PROVIDER = "*, category:categories(*), card:cards(*)";
 const SELECT_BILL = `*, provider:providers(${SELECT_PROVIDER})`;
 
 function falla(error: { message: string } | null) {
@@ -33,7 +34,11 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 function unirProviders(): ProviderFull[] {
-  return demo.providers.map((p) => ({ ...p, category: demo.categories.find((c) => c.id === p.category_id)! }));
+  return demo.providers.map((p) => ({
+    ...p,
+    category: demo.categories.find((c) => c.id === p.category_id)!,
+    card: demo.cards.find((c) => c.id === p.card_id) ?? null,
+  }));
 }
 
 export async function getProviders(): Promise<ProviderFull[]> {
@@ -80,6 +85,19 @@ export async function getBill(id: string): Promise<BillFull | null> {
   const { data, error } = await sb.from("bills").select(SELECT_BILL).eq("id", id).maybeSingle();
   falla(error);
   return data as BillFull | null;
+}
+
+/**
+ * Registra como pagadas las suscripciones cobradas a tarjeta de crédito cuyo día ya llegó en el periodo.
+ * Idempotente: no toca las que ya tienen cuenta ese mes. Llamar antes de leer las cuentas del mes.
+ */
+export async function registrarCargosAutomaticos(periodo: string, hoy: string) {
+  const [providers, bills] = await Promise.all([getProviders(), getBills([periodo])]);
+  const nuevas = cargosAutomaticos(providers, bills, periodo, hoy);
+  if (!nuevas.length) return;
+  if (modoDemo) return void demo.bills.push(...nuevas.map((b) => ({ ...b, id: crypto.randomUUID() })));
+  const sb = await crearSupabase();
+  falla((await sb.from("bills").insert(nuevas)).error);
 }
 
 // ——— Escrituras ———
@@ -289,6 +307,7 @@ export async function deleteCard(id: string): Promise<"eliminada" | "desactivada
       return "desactivada";
     }
     demo.cards = demo.cards.filter((c) => c.id !== id);
+    for (const p of demo.providers) if (p.card_id === id) p.card_id = null;
     return "eliminada";
   }
   const sb = await crearSupabase();

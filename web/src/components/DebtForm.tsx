@@ -8,7 +8,7 @@ const COLS = { gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1
 
 export function DebtForm({ tipo, cards, debt }: { tipo: TipoDeuda; cards: Card[]; debt?: Debt | null }) {
   const compra = tipo === "compra";
-  const tarjetas = cards.filter((c) => c.activa || c.id === debt?.card_id);
+  const tarjetas = cards.filter((c) => c.tipo === "credito" && (c.activa || c.id === debt?.card_id));
 
   if (compra && tarjetas.length === 0) {
     return (

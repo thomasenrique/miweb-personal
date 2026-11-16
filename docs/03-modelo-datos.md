@@ -28,6 +28,7 @@ goals 1──* contributions
 | moneda | enum | `CLP` · `USD` (moneda habitual del cobro) |
 | monto_estimado | integer | CLP, para pendientes |
 | activo | boolean | |
+| card_id | uuid → cards | tarjeta con que se cobra (solo suscripciones); null = pago manual. Si es de crédito, la cuenta del mes se registra pagada sola el día de cobro y se suma al pago de la tarjeta |
 
 ## bills
 | Campo | Tipo | Nota |
@@ -110,11 +111,12 @@ Proveedores reales, montos y días de vencimiento se cargan en la primera pantal
 ## cards (tarjetas)
 | Campo | Tipo | Nota |
 |---|---|---|
-| nombre | text | "Visa BCI" |
+| nombre | text | "Visa BCI", "Cuenta RUT" |
+| tipo | enum | `credito` · `debito` (débito/prepago: solo para cobrar suscripciones) |
 | ultimos4 | char(4) | opcional |
-| cupo | integer | CLP |
-| dia_facturacion | smallint | 1–31 |
-| dia_pago | smallint | 1–31 |
+| cupo | integer | CLP, solo crédito |
+| dia_facturacion | smallint | 1–31, obligatorio en crédito |
+| dia_pago | smallint | 1–31, obligatorio en crédito |
 | activa | boolean | |
 
 ## debts (compras en cuotas y créditos)

@@ -5,6 +5,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { MoneyInput } from "@/components/MoneyInput";
 import { Encabezado, ErrorMsg, Monto } from "@/components/ui";
 import { getProviders, getSueldo, modoDemo } from "@/lib/data";
+import { agruparPorTarjeta, fechaCorta, formatCLP, hoyChile, type GrupoTarjeta } from "@/lib/finanzas";
 import type { ProviderFull } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Ajustes" };
@@ -14,7 +15,89 @@ const AVISOS: Record<string, string> = {
   desactivado: "El proveedor tiene cuentas registradas, así que quedó desactivado en vez de eliminarse.",
   sueldo: "Sueldo guardado. Revisa tu libre disponible en Inicio.",
   "sueldo-borrado": "Sueldo borrado.",
+  "tarjeta-eliminada": "Tarjeta eliminada. Sus suscripciones quedaron sin tarjeta.",
+  "tarjeta-desactivada": "La tarjeta tiene compras registradas, así que quedó desactivada.",
 };
+
+function Fila({ p }: { p: ProviderFull }) {
+  return (
+    <li style={p.activo ? undefined : { opacity: 0.55 }}>
+      <Link href={`/ajustes/proveedor/${p.id}`} className="h-link-row" style={{ display: "contents" }}>
+        <span className="h-ico" aria-hidden="true">{p.category.icono}</span>
+        <span className="h-grow">
+          <b>{p.nombre}</b>
+          <br />
+          <span className="h-muted">
+            {p.category.nombre}
+            {p.dia_vencimiento ? ` · día ${p.dia_vencimiento}` : ""}
+            {p.frecuencia === "anual" ? " · anual" : ""}
+            {p.moneda === "USD" ? " · USD" : ""}
+            {p.activo ? "" : " · inactivo"}
+          </span>
+        </span>
+        {p.monto_estimado != null && <Monto valor={p.monto_estimado} />}
+      </Link>
+    </li>
+  );
+}
+
+function CabeceraTarjeta({ g }: { g: GrupoTarjeta }) {
+  const c = g.card;
+  const proximo = g.proximo && (
+    <> · próximo: {g.proximo.provider.nombre} {fechaCorta(g.proximo.fecha)}{g.proximo.provider.monto_estimado ? ` (${formatCLP(g.proximo.provider.monto_estimado)})` : ""}</>
+  );
+  if (!c) {
+    return (
+      <div className="h-tarjeta-cab">
+        <div className="h-row"><b>Pago manual / sin tarjeta</b></div>
+        <div className="h-muted">{formatCLP(g.mensual)} al mes{proximo}</div>
+      </div>
+    );
+  }
+  const debito = c.tipo === "debito";
+  return (
+    <Link href={`/deudas/tarjeta/${c.id}`} className="h-link-row h-tarjeta-cab" style={{ display: "block" }}>
+      <div className="h-row">
+        <span className="h-grow">
+          <b>💳 {c.nombre}</b> {c.ultimos4 && <span className="h-muted">··{c.ultimos4}</span>}
+        </span>
+        <span className={`h-pill ${debito ? "h-pill--ok" : "h-pill--accent"}`}>{debito ? "Débito" : "Crédito"}</span>
+      </div>
+      <div className="h-muted">
+        {debito ? (
+          <>Cargar <b style={{ color: "var(--h-text)" }}>{formatCLP(g.mensual)}</b> al mes</>
+        ) : (
+          <><b style={{ color: "var(--h-text)" }}>{formatCLP(g.mensual)}</b> al mes se cargan solos a la tarjeta</>
+        )}
+        {proximo}
+      </div>
+    </Link>
+  );
+}
+
+function ListaPorTarjeta({ titulo, items }: { titulo: string; items: ProviderFull[] }) {
+  const grupos = agruparPorTarjeta(items, hoyChile());
+  return (
+    <section className="h-card" id="medios">
+      <div className="h-row">
+        <h3>{titulo}</h3>
+        <Link className="h-btn h-btn--ghost" href="/deudas/tarjeta/nueva?tipo=debito">+ Tarjeta</Link>
+      </div>
+      {items.length === 0 ? (
+        <p className="h-muted">Sin proveedores todavía.</p>
+      ) : (
+        grupos.map((g) => (
+          <div key={g.card?.id ?? "manual"} className="h-tarjeta-grupo">
+            <CabeceraTarjeta g={g} />
+            <ul className="h-list">
+              {g.items.map((p) => <Fila key={p.id} p={p} />)}
+            </ul>
+          </div>
+        ))
+      )}
+    </section>
+  );
+}
 
 function Lista({ titulo, items }: { titulo: string; items: ProviderFull[] }) {
   return (
@@ -24,25 +107,7 @@ function Lista({ titulo, items }: { titulo: string; items: ProviderFull[] }) {
         <p className="h-muted">Sin proveedores todavía.</p>
       ) : (
         <ul className="h-list">
-          {items.map((p) => (
-            <li key={p.id} style={p.activo ? undefined : { opacity: 0.55 }}>
-              <Link href={`/ajustes/proveedor/${p.id}`} className="h-link-row" style={{ display: "contents" }}>
-                <span className="h-ico" aria-hidden="true">{p.category.icono}</span>
-                <span className="h-grow">
-                  <b>{p.nombre}</b>
-                  <br />
-                  <span className="h-muted">
-                    {p.category.nombre}
-                    {p.dia_vencimiento ? ` · día ${p.dia_vencimiento}` : ""}
-                    {p.frecuencia === "anual" ? " · anual" : ""}
-                    {p.moneda === "USD" ? " · USD" : ""}
-                    {p.activo ? "" : " · inactivo"}
-                  </span>
-                </span>
-                {p.monto_estimado != null && <Monto valor={p.monto_estimado} />}
-              </Link>
-            </li>
-          ))}
+          {items.map((p) => <Fila key={p.id} p={p} />)}
         </ul>
       )}
     </section>
@@ -77,10 +142,11 @@ export default async function AjustesPage({ searchParams }: PageProps<"/ajustes"
       <h2>Proveedores</h2>
       <p className="h-muted" style={{ margin: 0 }}>
         Tus proveedores con su día de vencimiento y monto estimado. Con esto la app te avisa qué falta pagar.
+        En Personal se agrupan por la tarjeta con que se cobran: así sabes cuánto cargar a cada una.
       </p>
       <div className="h-grid">
         <Lista titulo="🏠 Hogar" items={providers.filter((p) => p.category.grupo === "hogar")} />
-        <Lista titulo="🙋 Personal" items={providers.filter((p) => p.category.grupo === "personal")} />
+        <ListaPorTarjeta titulo="🙋 Personal" items={providers.filter((p) => p.category.grupo === "personal")} />
       </div>
       {!modoDemo && (
         <section className="h-card h-card--soft h-stack" style={{ marginTop: "var(--h-s7)" }}>

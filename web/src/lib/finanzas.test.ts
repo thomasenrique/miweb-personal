@@ -5,7 +5,8 @@ import {
   parseMonto, resumenSuscripciones, textoVencimiento, totalPorCategoria, totalPorGrupo,
   ultimosPeriodos, variacion,
 } from "./finanzas.ts";
-import type { BillFull, Category, ProviderFull } from "./types.ts";
+import { agruparPorTarjeta, cargosAutomaticos, proximoCobro } from "./finanzas.ts";
+import type { BillFull, Card, Category, ProviderFull } from "./types.ts";
 
 const luz: Category = { id: "c1", nombre: "Luz", icono: "💡", grupo: "hogar", es_suscripcion: false, orden: 1 };
 const subs: Category = { id: "c2", nombre: "Suscripciones", icono: "🔁", grupo: "personal", es_suscripcion: true, orden: 2 };
@@ -14,7 +15,7 @@ function prov(o: Partial<ProviderFull>): ProviderFull {
   return {
     id: "p", nombre: "X", category_id: luz.id, category: luz, numero_cliente: null,
     dia_vencimiento: null, frecuencia: "mensual", mes_cobro: null, moneda: "CLP",
-    monto_estimado: null, activo: true, ...o,
+    monto_estimado: null, activo: true, card_id: null, card: null, ...o,
   };
 }
 function bill(p: ProviderFull, o: Partial<BillFull>): BillFull {
@@ -109,4 +110,35 @@ test("pago rápido usa el monto estimado y marca pagado hoy", () => {
 test("pago rápido: sin monto estimado no se puede", () => {
   assert.equal(cuentaPagadaRapida(prov({ monto_estimado: null }), "2026-11", "2026-11-15"), null);
   assert.equal(cuentaPagadaRapida(prov({ monto_estimado: 0 }), "2026-11", "2026-11-15"), null);
+});
+
+const visa: Card = { id: "visa", nombre: "Visa BCI", tipo: "credito", ultimos4: null, cupo: null, dia_facturacion: 20, dia_pago: 5, activa: true };
+const rut: Card = { id: "rut", nombre: "Cuenta RUT", tipo: "debito", ultimos4: null, cupo: null, dia_facturacion: null, dia_pago: null, activa: true };
+const sub = (id: string, dia: number | null, card: Card | null, o: Partial<ProviderFull> = {}) =>
+  prov({ id, category: subs, category_id: subs.id, dia_vencimiento: dia, monto_estimado: 5000, card, card_id: card?.id ?? null, ...o });
+
+test("cargo automático: solo crédito, día ya llegado y sin cuenta del mes", () => {
+  const ya = sub("ya", 10, visa);
+  const futuro = sub("futuro", 20, visa);
+  const debito = sub("debito", 3, rut);
+  const pagada = sub("pagada", 1, visa);
+  const luzConTarjeta = prov({ id: "luz", dia_vencimiento: 1, monto_estimado: 40000, card: visa, card_id: visa.id });
+  const r = cargosAutomaticos([ya, futuro, debito, pagada, luzConTarjeta], [bill(pagada, {})], "2026-11", "2026-11-15");
+  assert.deepEqual(r.map((b) => b.provider_id), ["ya"]);
+  assert.equal(r[0].estado, "pagado");
+  assert.equal(r[0].fecha_pago, "2026-11-10");
+  assert.equal(r[0].monto, 5000);
+  assert.match(r[0].notas!, /Visa BCI/);
+});
+
+test("agrupa suscripciones por tarjeta con total y próximo cobro", () => {
+  const g = agruparPorTarjeta(
+    [sub("a", 5, visa), sub("b", 20, rut), sub("c", 26, rut, { monto_estimado: 11000 }), sub("d", null, null)],
+    "2026-11-15",
+  );
+  assert.deepEqual(g.map((x) => x.card?.id ?? null), ["rut", "visa", null]);
+  assert.equal(g[0].mensual, 16000);
+  assert.equal(g[0].proximo?.fecha, "2026-11-20");
+  assert.equal(g[1].proximo?.fecha, "2026-12-05");
+  assert.equal(proximoCobro(sub("anual", 3, rut, { frecuencia: "anual", mes_cobro: 2 }), "2026-11-15"), "2027-02-03");
 });

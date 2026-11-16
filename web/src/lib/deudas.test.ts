@@ -4,9 +4,9 @@ import {
   aPagarEnPeriodo, capitalPendiente, cuotaDelPeriodo, cuotasPagadas, interesTotal,
   primerMesPagoTarjeta, proyeccion, resumenTarjeta, saldoRestante, vencimientoCuota,
 } from "./deudas.ts";
-import type { Card, DebtFull } from "./types.ts";
+import type { Card, DebtFull, ProviderFull } from "./types.ts";
 
-const visa: Card = { id: "visa", nombre: "Visa", ultimos4: "4821", cupo: 3_000_000, dia_facturacion: 20, dia_pago: 5, activa: true };
+const visa: Card = { id: "visa", nombre: "Visa", tipo: "credito", ultimos4: "4821", cupo: 3_000_000, dia_facturacion: 20, dia_pago: 5, activa: true };
 
 function compra(o: Partial<DebtFull>): DebtFull {
   return {
@@ -58,4 +58,16 @@ test("resumen de tarjeta", () => {
   assert.equal(r.proximoPago, "2026-12-05"); // el pago del 5 nov ya pasó
   assert.equal(r.montoProximo, 62_400);
   assert.equal(r.activas, 1);
+});
+
+test("el pago de la tarjeta suma las suscripciones del ciclo", () => {
+  const cat = { id: "s", nombre: "Suscripciones", icono: "🔁", grupo: "personal" as const, es_suscripcion: true, orden: 1 };
+  const sub = (id: string, dia: number): ProviderFull => ({
+    id, nombre: id, category_id: "s", category: cat, numero_cliente: null, dia_vencimiento: dia, frecuencia: "mensual",
+    mes_cobro: null, moneda: "CLP", monto_estimado: 5_000, activo: true, card_id: visa.id, card: visa,
+  });
+  // Pago del 5 dic: estado que cierra el 20 nov → cobros del 21 oct al 20 nov.
+  const r = resumenTarjeta(visa, [compra({})], "2026-11-15", [sub("a", 14), sub("b", 25)]);
+  assert.equal(r.suscripcionesProximo, 10_000); // a: 14 nov; b: 25 oct
+  assert.equal(r.montoProximo, 62_400 + 10_000);
 });

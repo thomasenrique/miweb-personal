@@ -1,7 +1,7 @@
 // Lógica pura de tarjetas, compras en cuotas y créditos (probada con `node --test`).
-import { addMeses, fechaVencimiento, periodoDe } from "./finanzas.ts";
+import { addMeses, cobraEnPeriodo, esCargoCredito, fechaCobro, fechaVencimiento, periodoDe } from "./finanzas.ts";
 import { mesesEntre } from "./metas.ts";
-import type { Card, DebtFull, Grupo } from "./types.ts";
+import type { Card, DebtFull, Grupo, ProviderFull } from "./types.ts";
 
 /**
  * Mes (YYYY-MM) en que se paga la cuota 1 de una compra con tarjeta.
@@ -73,19 +73,43 @@ export function capitalPendiente(d: DebtFull, hoy: string): number {
   return Math.round((d.monto_total * (d.n_cuotas - cuotasPagadas(d, hoy))) / d.n_cuotas);
 }
 
-export function resumenTarjeta(card: Card, debts: DebtFull[], hoy: string) {
+/**
+ * Suscripciones cobradas a la tarjeta que entran en el estado de cuenta que se paga en `periodoPago`.
+ */
+export function suscripcionesEnPago(card: Card, providers: ProviderFull[], periodoPago: string): number {
+  if (card.tipo !== "credito" || card.dia_facturacion == null || card.dia_pago == null) return 0;
+  let total = 0;
+  for (const p of providers) {
+    if (p.card_id !== card.id || !esCargoCredito(p)) continue;
+    for (let i = -2; i <= 0; i++) {
+      const per = addMeses(periodoPago, i);
+      if (!cobraEnPeriodo(p, per)) continue;
+      if (primerMesPagoTarjeta(fechaCobro(p, per), card.dia_facturacion, card.dia_pago) === periodoPago) {
+        total += p.monto_estimado ?? 0;
+      }
+    }
+  }
+  return total;
+}
+
+export function resumenTarjeta(card: Card, debts: DebtFull[], hoy: string, providers: ProviderFull[] = []) {
   const propias = debts.filter((d) => d.card_id === card.id);
   const usado = propias.reduce((s, d) => s + capitalPendiente(d, hoy), 0);
   const actual = periodoDe(hoy);
-  const vencimientoActual = fechaVencimiento(actual, card.dia_pago);
+  const diaPago = card.dia_pago ?? 31;
+  const vencimientoActual = fechaVencimiento(actual, diaPago);
   // Si el pago de este mes ya pasó, el próximo es el del mes siguiente.
   const periodoProximo = vencimientoActual < hoy ? addMeses(actual, 1) : actual;
+  const cuotasProximo = aPagarEnPeriodo(propias, periodoProximo);
+  const suscripcionesProximo = suscripcionesEnPago(card, providers, periodoProximo);
   return {
     usado,
     disponible: card.cupo == null ? null : Math.max(0, card.cupo - usado),
     pctUsado: card.cupo ? Math.min(100, Math.round((usado / card.cupo) * 100)) : null,
-    proximoPago: fechaVencimiento(periodoProximo, card.dia_pago),
-    montoProximo: aPagarEnPeriodo(propias, periodoProximo),
+    proximoPago: fechaVencimiento(periodoProximo, diaPago),
+    cuotasProximo,
+    suscripcionesProximo,
+    montoProximo: cuotasProximo + suscripcionesProximo,
     activas: propias.filter((d) => !terminada(d, hoy)).length,
   };
 }
